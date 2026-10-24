@@ -1,3 +1,5 @@
+import { randomId } from "./random-id";
+
 /**
  * Kleiner History-API-Router mit Scroll-Wiederherstellung pro Verlaufseintrag.
  * Links sind normale `<a href>`-Elemente; `interceptLinks` fängt Klicks ab.
@@ -51,7 +53,7 @@ class Router {
     this.#state =
       existing?.key != null && existing.idx != null
         ? (existing as HistoryState)
-        : { key: crypto.randomUUID(), idx: 0 };
+        : { key: randomId(), idx: 0 };
     history.replaceState(this.#state, "");
     try {
       this.#scroll = JSON.parse(sessionStorage.getItem(SCROLL_STORE) ?? "{}");
@@ -62,7 +64,7 @@ class Router {
     addEventListener("popstate", (event) => {
       this.#saveScroll();
       const state = event.state as HistoryState | null;
-      this.#state = state ?? { key: crypto.randomUUID(), idx: 0 };
+      this.#state = state ?? { key: randomId(), idx: 0 };
       this.#sync();
     });
     addEventListener("pagehide", () => this.#saveScroll());
@@ -77,10 +79,10 @@ class Router {
     if (url.pathname === this.path && url.search === this.search && !replace) return;
     this.#saveScroll();
     if (replace) {
-      this.#state = { key: crypto.randomUUID(), idx: this.#state.idx };
+      this.#state = { key: randomId(), idx: this.#state.idx };
       history.replaceState(this.#state, "", url);
     } else {
-      this.#state = { key: crypto.randomUUID(), idx: this.#state.idx + 1 };
+      this.#state = { key: randomId(), idx: this.#state.idx + 1 };
       history.pushState(this.#state, "", url);
     }
     this.#sync();

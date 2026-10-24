@@ -1,4 +1,5 @@
 import { Jellyfin } from "@jellyfin/sdk";
+import { randomId } from "../random-id";
 
 const DEVICE_ID_KEY = "jailfin.deviceId";
 
@@ -6,7 +7,7 @@ const DEVICE_ID_KEY = "jailfin.deviceId";
 export function getDeviceId(): string {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
-    id = crypto.randomUUID();
+    id = randomId();
     localStorage.setItem(DEVICE_ID_KEY, id);
   }
   return id;

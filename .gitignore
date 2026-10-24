@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Lokales Deploy-Skript (enthält interne Hosts/Pfade, nicht versionieren)
+scripts/deploy.sh

@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.3.2] – 2026-10-24
+
+### Behoben
+
+- Die App blieb leer, wenn sie per HTTP über eine LAN-Adresse aufgerufen wurde, weil `crypto.randomUUID` dort nicht verfügbar ist. Es gibt jetzt einen Fallback.
+
 ## [0.3.1] – 2026-10-24
 
 ### Hinzugefügt
@@ -52,6 +58,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.3.2]: https://github.com/faulander/Jailfin/releases/tag/v0.3.2
 [0.3.1]: https://github.com/faulander/Jailfin/releases/tag/v0.3.1
 [0.3.0]: https://github.com/faulander/Jailfin/releases/tag/v0.3.0
 [0.2.0]: https://github.com/faulander/Jailfin/releases/tag/v0.2.0
