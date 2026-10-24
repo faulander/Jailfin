@@ -6,7 +6,7 @@ import type {
   SortOrder,
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getLibraryApi, getShowApi, getUserDataApi } from "@jellyfin/sdk/lib/utils/api";
-import { fetchAllPages, type ItemPage } from "../nextup/nextup";
+import { fetchAllPages, type ItemPage } from "./paging";
 import { session } from "./session.svelte";
 
 const CARD_FIELDS: ItemFields[] = ["PrimaryImageAspectRatio", "Overview", "DateCreated"];
@@ -70,7 +70,7 @@ export async function loadLatest(signal?: AbortSignal): Promise<BaseItemDto[]> {
   return data;
 }
 
-export type LibrarySort = "title" | "year" | "added";
+export type LibrarySort = "title" | "year" | "added" | "rating";
 
 const SORTS: Record<LibrarySort, { sortBy: ItemSortBy[]; sortOrder: SortOrder[] }> = {
   title: { sortBy: ["SortName"], sortOrder: ["Ascending"] },
@@ -79,6 +79,8 @@ const SORTS: Record<LibrarySort, { sortBy: ItemSortBy[]; sortOrder: SortOrder[] 
     sortOrder: ["Descending", "Descending", "Ascending"],
   },
   added: { sortBy: ["DateCreated", "SortName"], sortOrder: ["Descending", "Ascending"] },
+  // Community-Bewertung: bei aktiviertem OMDb-Metadatenanbieter die IMDb-Wertung, sonst TMDb.
+  rating: { sortBy: ["CommunityRating", "SortName"], sortOrder: ["Descending", "Ascending"] },
 };
 
 export async function loadLibraryPage(
@@ -87,11 +89,14 @@ export async function loadLibraryPage(
   startIndex: number,
   limit: number,
   signal?: AbortSignal,
+  { unwatchedOnly = false } = {},
 ): Promise<ItemPage> {
   const { data } = await getLibraryApi(session.api).getItems(
     {
       ...common(),
       includeItemTypes: [type],
+      // Serien gelten als gesehen, wenn alle Folgen gesehen sind.
+      ...(unwatchedOnly ? { isPlayed: false } : {}),
       recursive: true,
       startIndex,
       limit,

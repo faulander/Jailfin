@@ -55,7 +55,3 @@ export function backdropUrl(item: BaseItemDto, width = 1280): string | undefined
   }
   return undefined;
 }
-
-export function seriesPosterUrl(seriesId: string, tag: string | undefined, width = 200) {
-  return tag ? build(seriesId, "Primary", tag, width) : undefined;
-}

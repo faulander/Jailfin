@@ -7,13 +7,14 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 ## Funktionen
 
 - Anmeldung an einem eigenen Jellyfin-Server (HTTP/HTTPS, Adresse auch ohne Schema), Sitzung bleibt bis zum Abmelden erhalten.
-- Startseite: **Als nächstes**, **Weiterschauen**, **Zuletzt hinzugefügt**. Episoden, die schon unter „Als nächstes“ stehen, erscheinen nicht noch einmal unter „Weiterschauen“.
+- Startseite: **Als nächstes**, **Weiterschauen**, **Zuletzt hinzugefügt**. Episoden, die schon unter „Als nächstes“ stehen, erscheinen nicht noch einmal unter „Weiterschauen“. Die Reihen lassen sich wischen, mit großen Pfeil-Buttons blättern oder über eine breite Scrollleiste ziehen.
 - Serien aus „Als nächstes“ ausblenden: über das ⋮-Menü bzw. per Long-Press auf der Karte oder auf der Serienseite. Danach kann die Aktion rückgängig gemacht werden. Verwalten lassen sich die Ausblendungen unter _Einstellungen → Ausgeblendete Serien_.
-- Filme und Serien als Raster mit inkrementellem Nachladen und Sortierung nach Titel, Jahr oder Hinzufügedatum. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
+- Titel aus „Weiterschauen“ ausblenden (⋮-Menü bzw. Long-Press). Sie kommen zurück, sobald du sie erneut ansiehst; verwalten unter _Einstellungen → Aus „Weiterschauen“ ausgeblendet_.
+- Filme und Serien als Raster mit inkrementellem Nachladen, Sortierung nach Titel, Jahr, Hinzufügedatum oder Bewertung und dem Filter „Gesehene ausblenden“ (Serien gelten als gesehen, wenn alle Folgen gesehen sind). Die gewählte Ansicht bleibt pro Bibliothek gespeichert. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
 - Player:
   - Wiedergabe: Direct Play, bei Bedarf Transcoding über HLS (iPad nativ, sonst hls.js); Fortsetzen an der gespeicherten Position.
-  - Bedienung: Spulen −10/+30 s, Lautstärke, Vollbild, Tastatur (Leertaste/K, ←/→, F, M).
-  - Spuren: Wahl von Audiospur und Untertiteln. Textuntertitel stellt der Browser als WebVTT dar, Bilduntertitel brennt der Server ein.
+  - Bedienung: Spulen −10/+30 s, Lautstärke, Vollbild, Tastatur (Leertaste/K, ←/→, F, M, G/H für Untertitel-Versatz).
+  - Spuren: Wahl von Audiospur und Untertiteln. Textuntertitel (WebVTT) rendert Jailfin selbst, mit Versatz (±0,1/±0,5 s) und einstellbarer Darstellung (Größe, Position, Hintergrund, Farbe, Schriftstärke; pro Gerät gespeichert, auch unter _Einstellungen → Untertitel_). Bilduntertitel brennt der Server ein; dafür gibt es keinen Versatz.
   - Status: meldet Start, Fortschritt und Stopp an Jellyfin.
   - Am Ende einer Folge: „Nächste Folge“ (kein Autoplay).
   - Fehler: Scheitert Direct Play, weicht der Player automatisch auf Transcoding aus.
@@ -22,8 +23,12 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 ## „Als nächstes“: Funktionsweise und Grenzen
 
 - Grundlage ist der Next-Up-Endpunkt von Jellyfin (`/Shows/NextUp`, inklusive angefangener Folgen). Der Client lädt **alle Seiten** und filtert erst danach. Ausblendungen verdrängen deshalb keine späteren Ergebnisse.
-- Ausblendungen werden pro **Server-ID + Benutzer-ID + SeriesId** in IndexedDB gespeichert (DB `jailfin`, Store `hiddenSeries`, versioniert über `DB_VERSION`/`migrate` in `src/lib/nextup/hidden-store.ts`). Neue Staffeln oder Server-Updates holen eine ausgeblendete Serie nicht zurück.
+- Ausblendungen werden pro **Server-ID + Benutzer-ID + Liste + ID** (SeriesId für „Als nächstes“, ItemId für „Weiterschauen“) in IndexedDB gespeichert: DB `jailfin`, Store `hidden`, versioniert über `DB_VERSION`/`migrate` in `src/lib/hidden/store.ts`. Neue Staffeln oder Server-Updates holen eine ausgeblendete Serie nicht zurück.
 - Die Ausblendung ist eine **reine Anzeigepräferenz dieses Browsers bzw. dieser PWA-Installation**. Sie wird nicht zwischen Geräten synchronisiert und beeinflusst andere Jellyfin-Clients nicht. Gesehen-Status, Favoriten und Fortschritte bleiben unverändert.
+
+## Sortierung nach Bewertung
+
+Jellyfin kennt kein eigenes IMDb-Feld. Sortiert wird nach der **Community-Bewertung** des Items. Das ist die IMDb-Wertung, wenn auf dem Server der OMDb-Metadatenanbieter aktiv ist (in der Bibliothek vor TMDb priorisieren), sonst die TMDb-Wertung.
 
 ## Entwicklung
 
@@ -89,9 +94,9 @@ Konfiguration über Umgebungsvariablen, z. B. in einer `.env`-Datei neben `compo
 
 ```
 src/
-  lib/jellyfin/   SDK-Client, Sitzung, Fehlertexte, Abfragen, Bild-URLs
-  lib/nextup/     Paging/Filter (nextup.ts), IndexedDB-Store, reaktiver Zustand
-  lib/player/     Geräteprofil, PlaybackInfo-Aushandlung, Fortschrittsmeldungen
+  lib/jellyfin/   SDK-Client, Sitzung, Fehlertexte, Abfragen, Paging, Bild-URLs
+  lib/hidden/     Ausblendungen: IndexedDB-Store (mit Migrationen), Filter, reaktiver Zustand
+  lib/player/     Geräteprofil, PlaybackInfo-Aushandlung, Fortschrittsmeldungen, Untertitel-Stil
   lib/            Router, i18n (Deutsch), Formatierung, Toasts
   components/     UI-Bausteine (Karten, Raster, Action-Sheet, …)
   routes/         Seiten (Start, Bibliothek, Suche, Details, Player, Einstellungen)

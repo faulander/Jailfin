@@ -1,6 +1,7 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { describe, expect, it } from "vite-plus/test";
-import { fetchAllPages, selectNextUp, type PageFetcher } from "./nextup";
+import { selectNextUp } from "../hidden/filters";
+import { fetchAllPages, type PageFetcher } from "./paging";
 
 const episode = (id: string, seriesId: string): BaseItemDto => ({
   Id: id,
@@ -57,7 +58,7 @@ describe("fetchAllPages", () => {
   });
 });
 
-describe("selectNextUp", () => {
+describe("paging + hidden filter", () => {
   it("removes hidden series but keeps later results (more than one page)", async () => {
     // Szenario 8: 60 von 70 Serien ausgeblendet – die übrigen 10 stehen erst auf Seite 2.
     const { fetchPage } = server(70);
@@ -66,18 +67,5 @@ describe("selectNextUp", () => {
     expect(items.map((i) => i.SeriesId)).toEqual(
       Array.from({ length: 10 }, (_, i) => `s${60 + i}`),
     );
-  });
-
-  it("keeps at most one episode per series in server order", () => {
-    const items = [episode("a1", "A"), episode("b1", "B"), episode("a2", "A"), episode("c1", "C")];
-    expect(selectNextUp(items, new Set()).map((i) => i.Id)).toEqual(["a1", "b1", "c1"]);
-  });
-
-  it("matches hidden entries by SeriesId, not by name", () => {
-    const items: BaseItemDto[] = [
-      { Id: "x", SeriesId: "id-1", SeriesName: "Doppelt" },
-      { Id: "y", SeriesId: "id-2", SeriesName: "Doppelt" },
-    ];
-    expect(selectNextUp(items, new Set(["id-1"])).map((i) => i.Id)).toEqual(["y"]);
   });
 });

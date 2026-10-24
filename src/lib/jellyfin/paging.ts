@@ -8,8 +8,8 @@ export interface ItemPage {
 export type PageFetcher = (startIndex: number, limit: number) => Promise<ItemPage>;
 
 /**
- * Lädt alle Seiten einer paginierten Jellyfin-Abfrage. Wird vor dem Filtern der
- * ausgeblendeten Serien verwendet, damit Ausblendungen keine späteren Ergebnisse
+ * Lädt alle Seiten einer paginierten Jellyfin-Abfrage. Wird vor dem Filtern
+ * ausgeblendeter Einträge verwendet, damit Ausblendungen keine späteren Ergebnisse
  * „verdrängen“ (PRD 4.4, Szenario 8). `maxItems` begrenzt nur pathologische Fälle.
  */
 export async function fetchAllPages(
@@ -26,25 +26,4 @@ export async function fetchAllPages(
     if (total != null ? items.length >= total : batch.length < pageSize) break;
   }
   return items;
-}
-
-/**
- * Entfernt ausgeblendete Serien und hält höchstens eine Folge pro Serie.
- * Die vom Server gelieferte Reihenfolge bleibt erhalten (NU-09).
- */
-export function selectNextUp(
-  items: BaseItemDto[],
-  hiddenSeriesIds: ReadonlySet<string>,
-): BaseItemDto[] {
-  const seen = new Set<string>();
-  const result: BaseItemDto[] = [];
-  for (const item of items) {
-    const seriesId = item.SeriesId;
-    if (seriesId) {
-      if (hiddenSeriesIds.has(seriesId) || seen.has(seriesId)) continue;
-      seen.add(seriesId);
-    }
-    result.push(item);
-  }
-  return result;
 }

@@ -5,7 +5,11 @@
   import Icon from "./Icon.svelte";
   import Img from "./Img.svelte";
 
-  let { item, showType = false }: { item: BaseItemDto; showType?: boolean } = $props();
+  let {
+    item,
+    showType = false,
+    showRating = false,
+  }: { item: BaseItemDto; showType?: boolean; showRating?: boolean } = $props();
 
   const isEpisode = $derived(item.Type === "Episode");
   // Gruppierte neue Folgen verlinken auf die Serie.
@@ -29,6 +33,7 @@
   <span class="sub">
     {#if showType}<span class="type">{typeLabel}</span>{/if}
     {item.ProductionYear ?? ""}
+    {#if showRating && item.CommunityRating}<span class="rating">★ {item.CommunityRating.toFixed(1)}</span>{/if}
   </span>
 </a>
 
@@ -89,6 +94,12 @@
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     min-height: 1.2em;
+  }
+
+  .rating {
+    margin-left: var(--space-2);
+    color: var(--color-focus);
+    font-weight: 600;
   }
 
   .type {

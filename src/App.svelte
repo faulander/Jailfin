@@ -3,7 +3,7 @@
   import Toaster from "./components/Toaster.svelte";
   import { m } from "./lib/i18n";
   import { session } from "./lib/jellyfin/session.svelte";
-  import { hiddenSeries } from "./lib/nextup/hidden.svelte";
+  import { hiddenResume, hiddenSeries } from "./lib/hidden/state.svelte";
   import { interceptLinks, router } from "./lib/router.svelte";
   import Home from "./routes/Home.svelte";
   import Item from "./routes/Item.svelte";
@@ -19,8 +19,10 @@
   // Ausblendungen gehören zu Server + Benutzer (NU-07).
   $effect(() => {
     const scope = session.scope;
-    if (scope) hiddenSeries.load(scope).catch(() => undefined);
-    else hiddenSeries.reset();
+    for (const list of [hiddenSeries, hiddenResume]) {
+      if (scope) list.load(scope).catch(() => undefined);
+      else list.reset();
+    }
   });
 
   $effect(() => {

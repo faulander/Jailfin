@@ -3,6 +3,9 @@
   import type Hls from "hls.js/light";
   import { onDestroy, untrack } from "svelte";
   import ActionSheet, { type Action } from "../components/ActionSheet.svelte";
+  import Sheet from "../components/Sheet.svelte";
+  import SubtitleOverlay from "../components/SubtitleOverlay.svelte";
+  import SubtitleStyleControls from "../components/SubtitleStyleControls.svelte";
   import Icon from "../components/Icon.svelte";
   import StateView from "../components/StateView.svelte";
   import { episodeCode, formatClock, ticksToSeconds } from "../lib/format";
@@ -21,6 +24,7 @@
     type PlaybackRequest,
   } from "../lib/player/playback";
   import { PlaybackReporter } from "../lib/player/reporter";
+  import { subtitleSettings } from "../lib/player/subtitle-style.svelte";
   import { router } from "../lib/router.svelte";
   import { toasts } from "../lib/toast.svelte";
 
@@ -50,6 +54,12 @@
   let subtitleMenu = $state(false);
   let subtitleUrl = $state<string | null>(null);
   let activeSubtitle = $state(-1);
+  /** Versatz in Sekunden: positiv = Untertitel später, negativ = früher (nur Textuntertitel). */
+  let subtitleOffset = $state(0);
+  let cueHtml = $state<string[]>([]);
+  let textTrack: TextTrack | null = null;
+  const cueMarkup = new WeakMap<TextTrackCue, string>();
+  const cueSerializer = document.createElement("div");
 
   let request: PlaybackRequest = {};
   let reporter: PlaybackReporter | null = null;
@@ -75,6 +85,7 @@
   const subtitles = $derived(playback ? subtitleStreams(playback.source) : []);
   const shownTime = $derived(scrubbing ?? currentTime);
   const nearEnd = $derived(duration > 0 && duration - currentTime < NEXT_EPISODE_WINDOW_S);
+  const surfaceVisible = $derived(controlsVisible || phase !== "playing");
 
   // ---- Laden & Quellen --------------------------------------------------
 
@@ -283,6 +294,8 @@
       ArrowRight: () => seekBy(30),
       f: () => void toggleFullscreen(),
       m: () => video && (video.muted = !video.muted),
+      g: () => shiftSubtitles(-0.1),
+      h: () => shiftSubtitles(0.1),
     };
     const handler = handlers[event.key];
     if (!handler) return;
@@ -364,25 +377,87 @@
   function clearSubtitle() {
     if (subtitleUrl) URL.revokeObjectURL(subtitleUrl);
     subtitleUrl = null;
+    textTrack = null;
+    cueHtml = [];
+  }
+
+  /** Track nur laden, nicht nativ anzeigen: die Darstellung übernimmt SubtitleOverlay. */
+  function hiddenTrack(el: HTMLTrackElement) {
+    el.track.mode = "hidden";
   }
 
   function onTrackLoad(event: Event) {
-    const track = (event.currentTarget as HTMLTrackElement).track;
-    track.mode = "showing";
+    textTrack = (event.currentTarget as HTMLTrackElement).track;
+    textTrack.mode = "hidden";
+    renderCues();
   }
+
+  function markup(cue: TextTrackCue): string {
+    let html = cueMarkup.get(cue);
+    if (html == null) {
+      // Der WebVTT-Parser des Browsers liefert nur Cue-Markup (i, b, u, ruby, Text) – kein beliebiges HTML.
+      cueSerializer.replaceChildren((cue as VTTCue).getCueAsHTML());
+      html = cueSerializer.innerHTML;
+      cueMarkup.set(cue, html);
+    }
+    return html;
+  }
+
+  /** Aktive Cues unter Berücksichtigung des Versatzes bestimmen. */
+  function renderCues() {
+    const cues = textTrack?.cues;
+    if (!cues || !video) {
+      if (cueHtml.length) cueHtml = [];
+      return;
+    }
+    const t = video.currentTime - subtitleOffset;
+    const next: string[] = [];
+    for (let i = 0; i < cues.length; i++) {
+      const cue = cues[i]!;
+      if (cue.startTime <= t && t < cue.endTime) next.push(markup(cue));
+    }
+    if (next.length !== cueHtml.length || next.some((html, i) => html !== cueHtml[i])) cueHtml = next;
+  }
+
+  // Während der Wiedergabe bildgenau nachführen (timeupdate feuert nur ~4×/s).
+  $effect(() => {
+    if (!subtitleUrl || paused) return;
+    let frame = requestAnimationFrame(function tickCues() {
+      renderCues();
+      frame = requestAnimationFrame(tickCues);
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+
+  $effect(() => {
+    void subtitleOffset;
+    untrack(renderCues);
+  });
+
+  function shiftSubtitles(delta: number) {
+    if (!subtitleUrl) return;
+    subtitleOffset = Math.max(-60, Math.min(60, Math.round((subtitleOffset + delta) * 10) / 10));
+  }
+
+  const clientSubtitle = $derived(!!subtitleUrl);
+  const burnedInSubtitle = $derived.by(() => {
+    const stream = subtitles.find((s) => s.Index === activeSubtitle);
+    return !!stream && !isClientRenderable(stream);
+  });
 
   const audioActions = $derived<Action[]>(
     audios.map((stream, i) => ({
-      label: `${stream.Index === playback?.audioStreamIndex ? "✓ " : ""}${trackLabel(stream, i + 1)}`,
+      label: trackLabel(stream, i + 1),
+      selected: stream.Index === playback?.audioStreamIndex,
       run: () => selectAudio(stream),
     })),
   );
 
-  const subtitleActions = $derived<Action[]>([
-    { label: `${activeSubtitle === -1 ? "✓ " : ""}${m.player.subtitlesOff}`, run: () => void selectSubtitle(-1) },
+  const subtitleOptions = $derived([
+    { index: -1, label: m.player.subtitlesOff },
     ...subtitles.map((stream, i) => ({
-      label: `${stream.Index === activeSubtitle ? "✓ " : ""}${trackLabel(stream, i + 1)}${stream.IsExternal ? ` · ${m.player.external}` : ""}`,
-      run: () => void selectSubtitle(stream.Index ?? -1),
+      index: stream.Index ?? -1,
+      label: `${trackLabel(stream, i + 1)}${stream.IsExternal ? ` · ${m.player.external}` : ""}`,
     })),
   ]);
 
@@ -442,21 +517,31 @@
       reveal();
     }}
     onplay={() => reporter?.progress("unpause")}
-    onseeked={() => reporter?.progress("timeupdate")}
+    onseeked={() => {
+      reporter?.progress("timeupdate");
+      renderCues();
+    }}
+    ontimeupdate={renderCues}
     onended={onEnded}
     onerror={onError}
     ondblclick={() => void toggleFullscreen()}
   >
     {#if subtitleUrl}
       {#key subtitleUrl}
-        <track kind="subtitles" src={subtitleUrl} default label="Untertitel" onload={onTrackLoad} />
+        <track kind="subtitles" src={subtitleUrl} label="Untertitel" {@attach hiddenTrack} onload={onTrackLoad} />
       {/key}
     {/if}
   </video>
 
+  <SubtitleOverlay
+    cues={cueHtml}
+    style={subtitleSettings.style}
+    lift={surfaceVisible && phase === "playing" ? "150px" : "0px"}
+  />
+
   <!-- Bedienoberfläche -->
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="surface" class:visible={controlsVisible || phase !== "playing"} onclick={onSurfaceClick}>
+  <div class="surface" class:visible={surfaceVisible} onclick={onSurfaceClick}>
     <header class="top">
       <button class="btn btn-icon round" type="button" aria-label={m.common.back} onclick={exit}>
         <Icon name="back" />
@@ -592,7 +677,55 @@
   </div>
 
   <ActionSheet bind:open={audioMenu} title={m.player.audio} actions={audioActions} />
-  <ActionSheet bind:open={subtitleMenu} title={m.player.subtitles} actions={subtitleActions} />
+  <Sheet bind:open={subtitleMenu} title={m.player.subtitles} wide>
+    <ul class="option-list">
+      {#each subtitleOptions as option (option.index)}
+        <li>
+          <button
+            type="button"
+            aria-pressed={option.index === activeSubtitle}
+            onclick={() => {
+              subtitleMenu = false;
+              void selectSubtitle(option.index);
+            }}
+          >
+            <span>{option.label}</span>
+            {#if option.index === activeSubtitle}<Icon name="check" size={20} />{/if}
+          </button>
+        </li>
+      {/each}
+    </ul>
+
+    {#if burnedInSubtitle}
+      <p class="panel-note">{m.player.subtitleBurnedIn}</p>
+    {:else if clientSubtitle}
+      <section class="panel-section" aria-labelledby="sub-offset">
+        <h3 id="sub-offset">{m.player.subtitleOffset}</h3>
+        <div class="offset">
+          <button type="button" class="btn" onclick={() => shiftSubtitles(-0.5)}>−0,5</button>
+          <button type="button" class="btn" onclick={() => shiftSubtitles(-0.1)}>−0,1</button>
+          <output aria-live="polite">
+            {m.player.seconds(`${subtitleOffset > 0 ? "+" : ""}${subtitleOffset.toFixed(1).replace(".", ",")}`)}
+          </output>
+          <button type="button" class="btn" onclick={() => shiftSubtitles(0.1)}>+0,1</button>
+          <button type="button" class="btn" onclick={() => shiftSubtitles(0.5)}>+0,5</button>
+        </div>
+        <div class="offset-foot">
+          <p class="hint">{m.player.subtitleOffsetHint} (G / H)</p>
+          <button type="button" class="btn btn-ghost" disabled={subtitleOffset === 0} onclick={() => (subtitleOffset = 0)}>
+            {m.player.subtitleOffsetReset}
+          </button>
+        </div>
+      </section>
+    {/if}
+
+    {#if !burnedInSubtitle}
+      <section class="panel-section">
+        <h3>{m.player.subtitleAppearance}</h3>
+        <SubtitleStyleControls />
+      </section>
+    {/if}
+  </Sheet>
 </div>
 
 <style>
@@ -603,6 +736,8 @@
     color: white;
     user-select: none;
     -webkit-user-select: none;
+    /* Untertitelgröße relativ zur Höhe des Wiedergabebereichs */
+    container-type: size;
   }
 
   .player.hide-cursor {
@@ -614,11 +749,6 @@
     height: 100%;
     object-fit: contain;
     background: black;
-  }
-
-  video::cue {
-    font-size: clamp(1.1rem, 2.6vw, 2rem);
-    background: rgb(0 0 0 / 60%);
   }
 
   .surface {
@@ -831,5 +961,56 @@
 
   .spacer {
     flex: 1;
+  }
+
+  /* Untertitel-Panel (liegt im Sheet, daher normale Textfarbe) */
+  .panel-section {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .panel-section h3 {
+    font-size: var(--text-md);
+  }
+
+  .offset {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .offset .btn {
+    min-width: 64px;
+    padding: 0 var(--space-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .offset output {
+    min-width: 7ch;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .offset-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .hint,
+  .panel-note {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .panel-note {
+    margin-top: var(--space-3);
   }
 </style>

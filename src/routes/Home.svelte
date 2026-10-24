@@ -12,13 +12,13 @@
   import PosterCard from "../components/PosterCard.svelte";
   import Shelf from "../components/Shelf.svelte";
   import StateView from "../components/StateView.svelte";
-  import { hideFromNextUp, play } from "../lib/actions";
+  import { hideFromNextUp, hideFromResume, play } from "../lib/actions";
   import { hasResumePosition } from "../lib/format";
   import { m } from "../lib/i18n";
   import { loadLatest, loadNextUp, loadResume } from "../lib/jellyfin/queries";
   import { session } from "../lib/jellyfin/session.svelte";
-  import { hiddenSeries } from "../lib/nextup/hidden.svelte";
-  import { selectNextUp } from "../lib/nextup/nextup";
+  import { selectNextUp, selectResume } from "../lib/hidden/filters";
+  import { hiddenResume, hiddenSeries } from "../lib/hidden/state.svelte";
   import { router } from "../lib/router.svelte";
 
   type Section<T> = { data?: T; error?: unknown; loading: boolean };
@@ -79,9 +79,15 @@
   const nextUp = $derived(
     nextUpRaw.data && hiddenReady ? selectNextUp(nextUpRaw.data, hiddenSeries.ids) : undefined,
   );
-  // „Weiterschauen“ zeigt keine Folgen, die bereits unter „Als nächstes“ stehen (PRD 4.1).
+  // „Weiterschauen“ zeigt keine Folgen, die bereits unter „Als nächstes“ stehen (PRD 4.1),
+  // und keine lokal ausgeblendeten Titel.
   const nextUpIds = $derived(new Set((nextUp ?? []).map((i) => i.Id)));
-  const resumeItems = $derived((resume.data ?? []).filter((i) => !nextUpIds.has(i.Id)));
+  const resumeReady = $derived(hiddenResume.ready || !!hiddenResume.error);
+  const resumeItems = $derived(
+    resume.data && resumeReady
+      ? selectResume(resume.data, hiddenResume.entries).filter((i) => !nextUpIds.has(i.Id))
+      : [],
+  );
 
   function nextUpActions(item: BaseItemDto): Action[] {
     const actions: Action[] = [];
@@ -101,10 +107,11 @@
     const target = item.Type === "Episode" ? item.SeriesId : item.Id;
     const actions: Action[] = [
       { label: m.common.playFromStart, icon: "replay10", run: () => play(item, { fromStart: true }) },
+      { label: m.home.hideResume, icon: "eyeOff", run: () => void hideFromResume(item) },
     ];
     if (target) {
       actions.push({
-        label: item.Type === "Episode" ? m.home.goToSeries : m.common.more,
+        label: item.Type === "Episode" ? m.home.goToSeries : m.home.details,
         icon: item.Type === "Episode" ? "tv" : "film",
         run: () => router.navigate(`/item/${encodeURIComponent(target)}`),
       });

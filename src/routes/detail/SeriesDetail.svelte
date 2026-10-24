@@ -11,7 +11,7 @@
   import { describeError } from "../../lib/jellyfin/errors";
   import { landscapeUrl } from "../../lib/jellyfin/images";
   import { loadEpisodes, loadSeasons, loadSeriesNextUp, setPlayed } from "../../lib/jellyfin/queries";
-  import { hiddenSeries } from "../../lib/nextup/hidden.svelte";
+  import { hiddenSeries } from "../../lib/hidden/state.svelte";
   import { router } from "../../lib/router.svelte";
   import { toasts } from "../../lib/toast.svelte";
   import DetailHero from "./DetailHero.svelte";

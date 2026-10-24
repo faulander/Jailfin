@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.2.0] – 2026-10-24
+
+### Hinzugefügt
+
+- **Weiterschauen:** Titel lassen sich über das ⋮-Menü bzw. per Long-Press ausblenden (mit Rückgängig). Sie erscheinen wieder, sobald du den Titel erneut ansiehst. Verwaltung unter _Einstellungen → Aus „Weiterschauen“ ausgeblendet_. Rein lokal, der Fortschritt auf dem Server bleibt erhalten.
+- **Filme & Serien:** Filter „Gesehene ausblenden“ und Sortierung nach Bewertung (Community-Bewertung von Jellyfin, ★ auf den Postern). Die gewählte Ansicht bleibt pro Bibliothek gespeichert.
+- **Untertitel-Versatz** im Player (±0,1 s / ±0,5 s, Tasten G/H) für Textuntertitel.
+- **Untertitel-Darstellung:** Größe, Abstand vom unteren Rand, Hintergrund, Schriftfarbe und -stärke; im Player und unter _Einstellungen → Untertitel_ mit Vorschau, pro Gerät gespeichert.
+- Reihen auf der Startseite haben große Blättern-Buttons und eine breite, greifbare Scrollleiste.
+
+### Geändert
+
+- Textuntertitel rendert Jailfin selbst statt des Browsers (`::cue`), damit Versatz und Darstellung überall gleich funktionieren. Bild-Untertitel brennt weiterhin der Server ein.
+- Lokale Datenbank auf Version 2: ein gemeinsamer Speicher für alle Ausblendungen. Bestehende ausgeblendete Serien werden automatisch übernommen.
+
 ## [0.1.0] – 2026-10-24
 
 Erste nutzbare Version (MVP gemäß PRD).
@@ -16,4 +31,5 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.2.0]: https://github.com/faulander/Jailfin/releases/tag/v0.2.0
 [0.1.0]: https://github.com/faulander/Jailfin/releases/tag/v0.1.0
