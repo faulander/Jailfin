@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.3.1] – 2026-10-24
+
+### Hinzugefügt
+
+- Untertitel: einstellbare Zeilenbreite („Zeilenumbruch ab Breite“, 30–100 % der Bildbreite in 5er-Schritten, Standard 88 %). Längere Zeilen werden innerhalb dieser Breite umbrochen. Einstellbar im Player und unter _Einstellungen → Untertitel_.
+
 ## [0.3.0] – 2026-10-24
 
 ### Hinzugefügt
@@ -46,6 +52,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.3.1]: https://github.com/faulander/Jailfin/releases/tag/v0.3.1
 [0.3.0]: https://github.com/faulander/Jailfin/releases/tag/v0.3.0
 [0.2.0]: https://github.com/faulander/Jailfin/releases/tag/v0.2.0
 [0.1.0]: https://github.com/faulander/Jailfin/releases/tag/v0.1.0

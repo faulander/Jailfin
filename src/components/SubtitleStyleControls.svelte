@@ -3,6 +3,9 @@
   import {
     POSITION_MAX,
     POSITION_MIN,
+    WIDTH_MAX,
+    WIDTH_MIN,
+    WIDTH_STEP,
     subtitleSettings,
     type SubtitleStyle,
   } from "../lib/player/subtitle-style.svelte";
@@ -48,6 +51,31 @@
         aria-label={t.up}
         disabled={style.position >= POSITION_MAX}
         onclick={() => subtitleSettings.update({ position: style.position + 2 })}
+      >
+        <Icon name="plus" />
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label" id="sub-width-label">{t.width}</span>
+    <div class="stepper" role="group" aria-labelledby="sub-width-label">
+      <button
+        type="button"
+        class="btn btn-icon"
+        aria-label={t.narrower}
+        disabled={style.width <= WIDTH_MIN}
+        onclick={() => subtitleSettings.update({ width: style.width - WIDTH_STEP })}
+      >
+        <Icon name="minus" />
+      </button>
+      <output aria-live="polite">{t.widthValue(style.width)}</output>
+      <button
+        type="button"
+        class="btn btn-icon"
+        aria-label={t.wider}
+        disabled={style.width >= WIDTH_MAX}
+        onclick={() => subtitleSettings.update({ width: style.width + WIDTH_STEP })}
       >
         <Icon name="plus" />
       </button>

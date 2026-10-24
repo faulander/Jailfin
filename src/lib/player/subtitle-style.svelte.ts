@@ -3,6 +3,8 @@ export interface SubtitleStyle {
   size: "s" | "m" | "l" | "xl" | "xxl" | "xxxl";
   /** Abstand vom unteren Bildrand in Prozent der Videohöhe */
   position: number;
+  /** Maximale Zeilenbreite in Prozent der Bildbreite; längerer Text wird umbrochen */
+  width: number;
   background: "none" | "shadow" | "box" | "solid";
   color: "white" | "yellow" | "cyan";
   weight: "normal" | "bold";
@@ -11,6 +13,7 @@ export interface SubtitleStyle {
 export const DEFAULT_SUBTITLE_STYLE: SubtitleStyle = {
   size: "m",
   position: 8,
+  width: 88,
   background: "shadow",
   color: "white",
   weight: "normal",
@@ -18,6 +21,9 @@ export const DEFAULT_SUBTITLE_STYLE: SubtitleStyle = {
 
 export const POSITION_MIN = 2;
 export const POSITION_MAX = 45;
+export const WIDTH_MIN = 30;
+export const WIDTH_MAX = 100;
+export const WIDTH_STEP = 5;
 
 const STORAGE_KEY = "jailfin.subtitleStyle.v1";
 
@@ -44,15 +50,17 @@ function sanitize(value: Partial<SubtitleStyle>): SubtitleStyle {
   const d = DEFAULT_SUBTITLE_STYLE;
   const pick = <K extends keyof SubtitleStyle>(key: K, allowed: readonly SubtitleStyle[K][]) =>
     allowed.includes(value[key] as SubtitleStyle[K]) ? (value[key] as SubtitleStyle[K]) : d[key];
-  const position = Number(value.position);
+  const clampInt = (raw: unknown, min: number, max: number, fallback: number) => {
+    const n = Number(raw);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
+  };
   return {
     size: pick("size", ["s", "m", "l", "xl", "xxl", "xxxl"]),
     background: pick("background", ["none", "shadow", "box", "solid"]),
     color: pick("color", ["white", "yellow", "cyan"]),
     weight: pick("weight", ["normal", "bold"]),
-    position: Number.isFinite(position)
-      ? Math.min(POSITION_MAX, Math.max(POSITION_MIN, Math.round(position)))
-      : d.position,
+    position: clampInt(value.position, POSITION_MIN, POSITION_MAX, d.position),
+    width: clampInt(value.width, WIDTH_MIN, WIDTH_MAX, d.width),
   };
 }
 

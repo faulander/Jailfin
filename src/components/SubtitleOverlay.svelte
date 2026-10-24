@@ -23,6 +23,7 @@
   <div
     class={["subtitles", `bg-${style.background}`]}
     style:--sub-bottom={`max(${style.position}%, ${lift})`}
+    style:--sub-width={`${style.width}%`}
     style:--sub-size={FONT_SIZE[style.size]}
     style:--sub-color={TEXT_COLOR[style.color]}
     style:--sub-weight={style.weight === "bold" ? 700 : 500}
@@ -40,7 +41,10 @@
     position: absolute;
     /* über dem Abdunkelungsverlauf der Steuerung; Klicks gehen durch (pointer-events: none) */
     z-index: 1;
-    inset-inline: 6%;
+    /* zentrierter Block mit einstellbarer Breite; längere Zeilen werden darin umbrochen */
+    left: 50%;
+    width: var(--sub-width);
+    translate: -50% 0;
     bottom: var(--sub-bottom);
     display: grid;
     justify-items: center;

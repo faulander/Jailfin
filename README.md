@@ -14,7 +14,7 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - Player:
   - Wiedergabe: Direct Play, bei Bedarf Transcoding über HLS (iPad nativ, sonst hls.js); Fortsetzen an der gespeicherten Position.
   - Bedienung: Klick/Tipp aufs Bild pausiert bzw. setzt fort, Doppelklick/-tipp schaltet Vollbild um. Dazu Spulen −10/+30 s, Lautstärke, Vollbild-Button, Tastatur (Leertaste/K, ←/→, F, M, G/H für Untertitel-Versatz).
-  - Spuren: Wahl von Audiospur und Untertiteln. Textuntertitel (WebVTT) rendert Jailfin selbst, mit Versatz (±0,1/±0,5 s) und einstellbarer Darstellung (Größe, Position, Hintergrund, Farbe, Schriftstärke; pro Gerät gespeichert, auch unter _Einstellungen → Untertitel_). Bilduntertitel brennt der Server ein; dafür gibt es keinen Versatz.
+  - Spuren: Wahl von Audiospur und Untertiteln. Textuntertitel (WebVTT) rendert Jailfin selbst, mit Versatz (±0,1/±0,5 s) und einstellbarer Darstellung (Größe, Position, Zeilenbreite in % der Bildbreite, Hintergrund, Farbe, Schriftstärke; pro Gerät gespeichert, auch unter _Einstellungen → Untertitel_). Bilduntertitel brennt der Server ein; dafür gibt es keinen Versatz.
   - Status: meldet Start, Fortschritt und Stopp an Jellyfin.
   - Am Ende einer Folge: „Nächste Folge“ (kein Autoplay).
   - Fehler: Scheitert Direct Play, weicht der Player automatisch auf Transcoding aus.
