@@ -1,0 +1,23 @@
+services:
+  jailfin:
+    build: .
+    image: jailfin:latest
+    restart: unless-stopped
+    ports:
+      # Host-Port über JAILFIN_PORT konfigurierbar (Standard 8080).
+      - "${JAILFIN_PORT:-8080}:8080"
+    environment:
+      # Optionale Vorbelegung des Server-Felds im Login, z. B. https://jellyfin.example.de
+      JELLYFIN_URL: ${JELLYFIN_URL:-}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Hinter einem vorhandenen Reverse Proxy (Traefik, Caddy, nginx …):
+    # Port-Mapping entfernen, das Proxy-Netz einbinden und dort auf jailfin:8080 routen.
+    # networks:
+    #   - proxy
+
+# networks:
+#   proxy:
+#     external: true
