@@ -2,6 +2,22 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.4.0] – 2026-10-24
+
+Schwerpunkt: weniger Transcoding auf dem Server, damit Streams nicht mehr ruckeln.
+
+### Hinzugefügt
+
+- **Lokale Server-Adresse:** Optional beim Login bzw. unter _Einstellungen → Verbindung_. Jailfin nutzt sie automatisch, wenn sie erreichbar ist und zum selben Jellyfin-Server gehört; sonst die öffentliche Adresse. Neu geprüft wird beim Start, nach Netzwechsel und bei Rückkehr in die App. Vorbelegung per `JELLYFIN_LOCAL_URL`. Eine http-Adresse funktioniert nur, wenn Jailfin selbst per http geöffnet ist.
+- **PGS-Untertitel** (Blu-ray-Bilduntertitel) rendert Jailfin selbst (libpgs), statt sie vom Server ins Bild einbrennen zu lassen. Versatz funktioniert auch hier.
+- **ASS/SSA-Untertitel** wandelt Jailfin selbst in Text-Untertitel um (Zeiten, Text, kursiv/fett); auch sie werden nicht mehr eingebrannt.
+
+### Geändert
+
+- Bisher erzwang ein eingebrannter Untertitel Video-Transcoding. Jetzt laufen solche Titel meist per Direct Play, sofern Video- und Audioformat zum Gerät passen.
+- HEVC mit 10 bit wird nur noch direkt abgespielt, wenn der Browser es dekodieren kann.
+- HLS-Wiedergabe mit größerem Vorlauf-Puffer, geduldigeren Timeouts und automatischer Wiederherstellung nach Netz- oder Decoderfehlern.
+
 ## [0.3.2] – 2026-10-24
 
 ### Behoben
@@ -58,6 +74,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.4.0]: https://github.com/faulander/Jailfin/releases/tag/v0.4.0
 [0.3.2]: https://github.com/faulander/Jailfin/releases/tag/v0.3.2
 [0.3.1]: https://github.com/faulander/Jailfin/releases/tag/v0.3.1
 [0.3.0]: https://github.com/faulander/Jailfin/releases/tag/v0.3.0

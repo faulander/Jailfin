@@ -7,6 +7,7 @@ import type {
 } from "@jellyfin/sdk/lib/generated-client/models";
 import { getMediaInfoApi } from "@jellyfin/sdk/lib/utils/api";
 import { buildDeviceProfile } from "./device-profile";
+import { assToVtt } from "./ass-to-vtt";
 import { m } from "../i18n";
 import { getDeviceId } from "../jellyfin/client";
 import { AppError } from "../jellyfin/errors";
@@ -138,19 +139,37 @@ export function trackLabel(stream: MediaStream, fallbackIndex: number): string {
 }
 
 /**
- * Textuntertitel, die der Browser selbst darstellen kann (WebVTT über DeliveryUrl).
- * Alles andere (Bild-Untertitel, eingebettete Spuren) muss der Server einbrennen.
+ * Vom Client dargestellte Untertitel: Textuntertitel liefert der Server als WebVTT bzw.
+ * ASS/SSA (wird hier nach WebVTT gewandelt), PGS-Bilduntertitel als .sup (libpgs).
+ * Alles andere (z. B. DVD-Untertitel) brennt der Server ins Bild ein – das erzwingt Transcoding.
  */
-export const isClientRenderable = (stream: MediaStream): boolean =>
-  stream.DeliveryMethod === "External" && !!stream.DeliveryUrl;
+export type ClientSubtitleKind = "text" | "pgs";
 
-/** Lädt einen externen Untertitel authentifiziert und liefert eine Blob-URL für `<track>`. */
-export async function fetchSubtitle(stream: MediaStream): Promise<string> {
+export function clientSubtitleKind(stream: MediaStream): ClientSubtitleKind | null {
+  if (stream.DeliveryMethod !== "External" || !stream.DeliveryUrl) return null;
+  return /\.pgssub(\?|$)/i.test(stream.DeliveryUrl) ? "pgs" : "text";
+}
+
+export const isClientRenderable = (stream: MediaStream): boolean =>
+  clientSubtitleKind(stream) != null;
+
+async function fetchDelivery(stream: MediaStream): Promise<Response> {
   const api = session.api;
   const path = stream.DeliveryUrl ?? "";
   const url = /^https?:/i.test(path) ? path : `${api.basePath}${path}`;
   const res = await fetch(url, { headers: { Authorization: api.authorizationHeader } });
   if (!res.ok) throw new AppError(m.errors.server(res.status), res.status);
-  const text = await res.text();
-  return URL.createObjectURL(new Blob([text], { type: "text/vtt" }));
+  return res;
+}
+
+/** Lädt einen Textuntertitel authentifiziert und liefert eine WebVTT-Blob-URL für `<track>`. */
+export async function fetchSubtitle(stream: MediaStream): Promise<string> {
+  const raw = await (await fetchDelivery(stream)).text();
+  const vtt = /\.(ass|ssa)(\?|$)/i.test(stream.DeliveryUrl ?? "") ? assToVtt(raw) : raw;
+  return URL.createObjectURL(new Blob([vtt], { type: "text/vtt" }));
+}
+
+/** Lädt einen PGS-Untertitel (.sup) authentifiziert als Binärdaten für libpgs. */
+export async function fetchPgsSubtitle(stream: MediaStream): Promise<ArrayBuffer> {
+  return (await fetchDelivery(stream)).arrayBuffer();
 }

@@ -5,15 +5,17 @@
   import { session } from "../lib/jellyfin/session.svelte";
 
   let server = $state(session.lastServerUrl);
+  let localServer = $state(session.lastLocalUrl);
   let username = $state("");
   let password = $state("");
   let busy = $state(false);
   let error = $state<string | null>(null);
 
   $effect(() => {
-    if (server) return;
+    if (server && localServer) return;
     loadRuntimeConfig().then((config) => {
       if (!server && config.defaultServerUrl) server = config.defaultServerUrl;
+      if (!localServer && config.localServerUrl) localServer = config.localServerUrl;
     });
   });
 
@@ -22,7 +24,7 @@
     busy = true;
     error = null;
     try {
-      await session.login(server, username, password);
+      await session.login(server, username, password, localServer);
     } catch (e) {
       error = describeError(e);
     } finally {
@@ -54,6 +56,19 @@
         placeholder={m.login.serverPlaceholder}
         required
         bind:value={server}
+      />
+    </div>
+    <div class="field">
+      <label for="local-server">{m.login.localServer}</label>
+      <input
+        id="local-server"
+        class="input"
+        type="text"
+        inputmode="url"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder={m.login.localServerPlaceholder}
+        bind:value={localServer}
       />
     </div>
     <div class="field">

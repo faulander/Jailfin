@@ -9,6 +9,9 @@ services:
     environment:
       # Optionale Vorbelegung des Server-Felds im Login, z. B. https://jellyfin.example.de
       JELLYFIN_URL: ${JELLYFIN_URL:-}
+      # Optionale LAN-Adresse, z. B. http://192.168.1.5:8096 – wird bevorzugt, wenn erreichbar
+      # (nur wenn Jailfin selbst per http geöffnet wird, sonst blockiert der Browser sie).
+      JELLYFIN_LOCAL_URL: ${JELLYFIN_LOCAL_URL:-}
     security_opt:
       - no-new-privileges:true
     cap_drop:

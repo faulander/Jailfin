@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { BaseItemDto, MediaStream } from "@jellyfin/sdk/lib/generated-client/models";
   import type Hls from "hls.js/light";
+  import type { PgsRenderer } from "libpgs";
   import { onDestroy, untrack } from "svelte";
   import ActionSheet, { type Action } from "../components/ActionSheet.svelte";
   import Sheet from "../components/Sheet.svelte";
@@ -15,8 +16,11 @@
   import { loadFollowingEpisode, loadItem } from "../lib/jellyfin/queries";
   import {
     audioStreams,
+    clientSubtitleKind,
+    fetchPgsSubtitle,
     fetchSubtitle,
     isClientRenderable,
+    type ClientSubtitleKind,
     requestPlayback,
     subtitleStreams,
     trackLabel,
@@ -56,7 +60,10 @@
   let subtitleMenu = $state(false);
   let subtitleUrl = $state<string | null>(null);
   let activeSubtitle = $state(-1);
-  /** Versatz in Sekunden: positiv = Untertitel später, negativ = früher (nur Textuntertitel). */
+  /** Art des aktuell vom Client dargestellten Untertitels (null = keiner bzw. eingebrannt) */
+  let subtitleKind = $state<ClientSubtitleKind | null>(null);
+  let pgsRenderer: PgsRenderer | null = null;
+  /** Versatz in Sekunden: positiv = Untertitel später, negativ = früher (nicht bei eingebrannten). */
   let subtitleOffset = $state(0);
   let cueHtml = $state<string[]>([]);
   let textTrack: TextTrack | null = null;
@@ -141,9 +148,36 @@
       const { default: HlsJs } = await import("hls.js/light");
       if (destroyed) return;
       if (!HlsJs.isSupported()) throw new Error(m.player.unplayable);
-      const instance = new HlsJs({ startPosition: startAt, maxBufferLength: 30 });
+      const instance = new HlsJs({
+        startPosition: startAt,
+        // Großzügiger Vorlauf gleicht Schwankungen von Netz und Server-Transcoding aus.
+        maxBufferLength: 60,
+        maxMaxBufferLength: 180,
+        maxBufferSize: 200 * 1000 * 1000,
+        backBufferLength: 30,
+        // Server-Transcoding liefert Segmente teils langsam: länger warten statt abbrechen.
+        fragLoadPolicy: {
+          default: {
+            maxTimeToFirstByteMs: 30_000,
+            maxLoadTimeMs: 120_000,
+            timeoutRetry: { maxNumRetry: 4, retryDelayMs: 0, maxRetryDelayMs: 0 },
+            errorRetry: { maxNumRetry: 6, retryDelayMs: 1000, maxRetryDelayMs: 8000 },
+          },
+        },
+      });
+      let mediaRecoveries = 0;
       instance.on(HlsJs.Events.ERROR, (_event, data) => {
-        if (data.fatal) fail(new Error(`${m.player.unplayable} (${data.details})`));
+        if (!data.fatal) return;
+        // Einmalige Selbstheilung bei Decoder-/Pufferfehlern bzw. Netzabbrüchen, bevor wir aufgeben.
+        if (data.type === HlsJs.ErrorTypes.MEDIA_ERROR && mediaRecoveries++ < 2) {
+          instance.recoverMediaError();
+          return;
+        }
+        if (data.type === HlsJs.ErrorTypes.NETWORK_ERROR && mediaRecoveries++ < 2) {
+          instance.startLoad();
+          return;
+        }
+        fail(new Error(`${m.player.unplayable} (${data.details})`));
       });
       instance.loadSource(pb.url);
       instance.attachMedia(el);
@@ -385,9 +419,31 @@
   }
 
   async function showSubtitle(stream: MediaStream) {
+    if (clientSubtitleKind(stream) === "pgs") {
+      const data = await fetchPgsSubtitle(stream);
+      clearSubtitle();
+      await showPgs(data);
+      return;
+    }
     const url = await fetchSubtitle(stream);
     clearSubtitle();
     subtitleUrl = url;
+    subtitleKind = "text";
+  }
+
+  /** PGS-Bilduntertitel mit libpgs (Web Worker + Canvas über dem Video). */
+  async function showPgs(data: ArrayBuffer) {
+    if (!video) return;
+    const [{ PgsRenderer }, { default: workerUrl }] = await Promise.all([
+      import("libpgs"),
+      import("libpgs/dist/libpgs.worker.js?url"),
+    ]);
+    if (destroyed) return;
+    const renderer = new PgsRenderer({ video, workerUrl, aspectRatio: "contain" });
+    renderer.timeOffset = -subtitleOffset;
+    pgsRenderer = renderer;
+    subtitleKind = "pgs";
+    await renderer.loadFromBuffer(data);
   }
 
   function clearSubtitle() {
@@ -395,6 +451,9 @@
     subtitleUrl = null;
     textTrack = null;
     cueHtml = [];
+    pgsRenderer?.dispose();
+    pgsRenderer = null;
+    subtitleKind = null;
   }
 
   /** Track nur laden, nicht nativ anzeigen: die Darstellung übernimmt SubtitleOverlay. */
@@ -448,14 +507,16 @@
   $effect(() => {
     void subtitleOffset;
     untrack(renderCues);
+    // libpgs: positiver timeOffset zeigt früher an – unser Versatz ist „positiv = später“.
+    if (pgsRenderer) pgsRenderer.timeOffset = -subtitleOffset;
   });
 
   function shiftSubtitles(delta: number) {
-    if (!subtitleUrl) return;
+    if (!subtitleKind) return;
     subtitleOffset = Math.max(-60, Math.min(60, Math.round((subtitleOffset + delta) * 10) / 10));
   }
 
-  const clientSubtitle = $derived(!!subtitleUrl);
+  const clientSubtitle = $derived(subtitleKind != null);
   const burnedInSubtitle = $derived.by(() => {
     const stream = subtitles.find((s) => s.Index === activeSubtitle);
     return !!stream && !isClientRenderable(stream);
@@ -735,7 +796,9 @@
       </section>
     {/if}
 
-    {#if !burnedInSubtitle}
+    {#if subtitleKind === "pgs"}
+      <p class="panel-note">{m.player.subtitlePgsAppearance}</p>
+    {:else if !burnedInSubtitle}
       <section class="panel-section">
         <h3>{m.player.subtitleAppearance}</h3>
         <SubtitleStyleControls />

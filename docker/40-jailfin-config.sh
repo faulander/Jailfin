@@ -4,8 +4,14 @@
 set -eu
 
 target=/usr/share/nginx/html/config.json
-url="${JELLYFIN_URL:-}"
-escaped=$(printf '%s' "$url" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
 
-printf '{\n  "defaultServerUrl": "%s"\n}\n' "$escaped" > "$target"
-echo "jailfin: config.json geschrieben (defaultServerUrl=${url:-<leer>})"
+json_escape() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+url="${JELLYFIN_URL:-}"
+local_url="${JELLYFIN_LOCAL_URL:-}"
+
+printf '{\n  "defaultServerUrl": "%s",\n  "localServerUrl": "%s"\n}\n' \
+  "$(json_escape "$url")" "$(json_escape "$local_url")" > "$target"
+echo "jailfin: config.json geschrieben (defaultServerUrl=${url:-<leer>}, localServerUrl=${local_url:-<leer>})"

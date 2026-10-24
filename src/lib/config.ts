@@ -5,6 +5,8 @@
 export interface RuntimeConfig {
   /** Vorbelegung des Server-Felds im Login, z. B. "https://jellyfin.example.de". */
   defaultServerUrl?: string;
+  /** Vorbelegung der lokalen Adresse, z. B. "http://192.168.1.5:8096". */
+  localServerUrl?: string;
 }
 
 let cached: Promise<RuntimeConfig> | undefined;

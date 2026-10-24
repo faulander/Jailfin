@@ -14,7 +14,7 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - Player:
   - Wiedergabe: Direct Play, bei Bedarf Transcoding über HLS (iPad nativ, sonst hls.js); Fortsetzen an der gespeicherten Position.
   - Bedienung: Klick/Tipp aufs Bild pausiert bzw. setzt fort, Doppelklick/-tipp schaltet Vollbild um. Dazu Spulen −10/+30 s, Lautstärke, Vollbild-Button, Tastatur (Leertaste/K, ←/→, F, M, G/H für Untertitel-Versatz).
-  - Spuren: Wahl von Audiospur und Untertiteln. Textuntertitel (WebVTT) rendert Jailfin selbst, mit Versatz (±0,1/±0,5 s) und einstellbarer Darstellung (Größe, Position, Zeilenbreite in % der Bildbreite, Hintergrund, Farbe, Schriftstärke; pro Gerät gespeichert, auch unter _Einstellungen → Untertitel_). Bilduntertitel brennt der Server ein; dafür gibt es keinen Versatz.
+  - Spuren: Wahl von Audiospur und Untertiteln. Alle gängigen Untertitel rendert Jailfin selbst, damit der Server nicht transcodieren muss: SRT & Co. (WebVTT), ASS/SSA (in Text umgewandelt, ohne Positionierung/Effekte) und PGS-Bilduntertitel (libpgs). Für Textuntertitel gibt es Versatz (±0,1/±0,5 s) und einstellbare Darstellung (Größe, Position, Zeilenbreite in % der Bildbreite, Hintergrund, Farbe, Schriftstärke; pro Gerät gespeichert, auch unter _Einstellungen → Untertitel_); PGS hat Versatz, aber keinen eigenen Stil. Nur seltene Formate (z. B. DVD-Untertitel) brennt der Server ein.
   - Status: meldet Start, Fortschritt und Stopp an Jellyfin.
   - Am Ende einer Folge: „Nächste Folge“ (kein Autoplay).
   - Fehler: Scheitert Direct Play, weicht der Player automatisch auf Transcoding aus.
@@ -71,10 +71,11 @@ docker compose up -d --build
 
 Konfiguration über Umgebungsvariablen, z. B. in einer `.env`-Datei neben `compose.yaml`:
 
-| Variable       | Standard | Bedeutung                                                                                      |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------- |
-| `JAILFIN_PORT` | `8080`   | Host-Port                                                                                      |
-| `JELLYFIN_URL` | leer     | Vorbelegung des Server-Felds im Login (wird beim Containerstart in `/config.json` geschrieben) |
+| Variable             | Standard | Bedeutung                                                                                                                               |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `JAILFIN_PORT`       | `8080`   | Host-Port                                                                                                                               |
+| `JELLYFIN_URL`       | leer     | Vorbelegung des Server-Felds im Login (wird beim Containerstart in `/config.json` geschrieben)                                          |
+| `JELLYFIN_LOCAL_URL` | leer     | Lokale (LAN-)Adresse, z. B. `http://192.168.1.5:8096`. Wird bevorzugt, wenn erreichbar; bestehende Sitzungen übernehmen sie automatisch |
 
 `JELLYFIN_URL` ist eine öffentliche Laufzeitkonfiguration. Tokens oder Passwörter gehören **nie** in Build- oder Umgebungsvariablen. Jeder Benutzer meldet sich selbst an.
 
@@ -82,6 +83,7 @@ Konfiguration über Umgebungsvariablen, z. B. in einer `.env`-Datei neben `compo
 
 - Der Browser spricht **direkt** mit Jellyfin. Jellyfin erlaubt CORS standardmäßig (`Access-Control-Allow-Origin: *`); das ist mit Jellyfin 12.3 getestet.
 - Wird Jailfin über HTTPS ausgeliefert, muss auch Jellyfin per HTTPS erreichbar sein. Sonst blockiert der Browser die Verbindung (Mixed Content); die App zeigt dafür eine eigene Fehlermeldung.
+- **Lokale Adresse:** Liegen Jailfin und Jellyfin im selben Netz, lässt sich zusätzlich eine LAN-Adresse hinterlegen (Login oder _Einstellungen → Verbindung_). Jailfin prüft beim Start, nach Netzwechsel und bei Rückkehr in die App, ob sie erreichbar ist und zum selben Server gehört (Server-ID), und nutzt sie dann für API, Bilder und Streams. So läuft der Stream nicht über Tunnel oder Proxy. Eine `http://`-Adresse ist nur nutzbar, wenn Jailfin selbst per `http://` geöffnet wird.
 - Hinter einem vorhandenen Reverse Proxy das Port-Mapping in `compose.yaml` entfernen, das Proxy-Netz einbinden (siehe Kommentar) und auf `jailfin:8080` routen. Läuft Jellyfin unter derselben Domain (z. B. `/jellyfin`), gibt man im Login einfach diese Adresse an.
 
 ## Sicherheit

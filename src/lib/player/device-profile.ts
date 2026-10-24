@@ -1,4 +1,5 @@
 import type {
+  CodecProfile,
   DeviceProfile,
   DirectPlayProfile,
   SubtitleProfile,
@@ -97,7 +98,6 @@ export function buildDeviceProfile(
             AudioCodec: hlsAudio.join(","),
             MaxAudioChannels: "6",
             MinSegments: 1,
-            BreakOnNonKeyFrames: true,
           },
         ]
       : [
@@ -112,12 +112,34 @@ export function buildDeviceProfile(
           },
         ];
 
-  // Textuntertitel liefert der Server als WebVTT aus; ASS/SSA und Bilduntertitel werden eingebrannt.
+  // Untertitel stellt Jailfin selbst dar, damit der Server sie nicht ins Bild einbrennen muss
+  // (Einbrennen erzwingt Video-Transcoding, auf schwacher Server-Hardware ruckelt das):
+  // SRT & Co. als WebVTT, ASS/SSA im Original (Umwandlung im Client), PGS als .sup.
   const subtitles: SubtitleProfile[] = [
     { Format: "vtt", Method: "External" },
-    { Format: "ass", Method: "Encode" },
-    { Format: "ssa", Method: "Encode" },
+    { Format: "ass", Method: "External" },
+    { Format: "ssa", Method: "External" },
+    { Format: "pgssub", Method: "External" },
   ];
+
+  // HEVC Main 10 (z. B. HDR-Blu-ray-Rips) nur direkt abspielen, wenn der Browser 10 bit dekodiert.
+  const codecProfiles: CodecProfile[] =
+    videoCodecs.includes("hevc") && !can('video/mp4; codecs="hvc1.2.4.L120.90"')
+      ? [
+          {
+            Type: "Video",
+            Codec: "hevc",
+            Conditions: [
+              {
+                Condition: "LessThanEqual",
+                Property: "VideoBitDepth",
+                Value: "8",
+                IsRequired: false,
+              },
+            ],
+          },
+        ]
+      : [];
 
   return {
     Name: "Jailfin Browser",
@@ -127,7 +149,7 @@ export function buildDeviceProfile(
     DirectPlayProfiles: directPlay,
     TranscodingProfiles: transcoding,
     ContainerProfiles: [],
-    CodecProfiles: [],
+    CodecProfiles: codecProfiles,
     SubtitleProfiles: subtitles,
   };
 }

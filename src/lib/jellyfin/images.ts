@@ -12,7 +12,7 @@ function build(
   maxWidth: number,
   index?: number,
 ): string {
-  const base = session.current?.serverUrl ?? "";
+  const base = session.baseUrl;
   const params = new URLSearchParams({
     tag,
     maxWidth: String(Math.round(maxWidth * Math.min(devicePixelRatio || 1, 2))),

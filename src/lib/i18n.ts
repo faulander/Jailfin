@@ -33,6 +33,8 @@ const de = {
     title: "Mit Jellyfin verbinden",
     server: "Server-Adresse",
     serverPlaceholder: "https://jellyfin.example.de",
+    localServer: "Lokale Adresse (optional)",
+    localServerPlaceholder: "http://192.168.1.5:8096",
     username: "Benutzername",
     password: "Passwort",
     submit: "Anmelden",
@@ -132,6 +134,8 @@ const de = {
     subtitleBurnedIn:
       "Dieser Untertitel wird vom Server ins Bild eingebrannt; Versatz und Darstellung lassen sich dafür nicht ändern.",
     subtitleAppearance: "Darstellung",
+    subtitlePgsAppearance:
+      "Bild-Untertitel (PGS) werden wie auf der Disc dargestellt; Größe und Stil lassen sich dafür nicht ändern, der Versatz schon.",
     seconds: (s: string) => `${s} s`,
   },
   subtitleStyle: {
@@ -160,7 +164,21 @@ const de = {
     server: "Server",
     serverName: "Name",
     serverVersion: "Version",
-    serverAddress: "Adresse",
+    serverAddress: "Öffentliche Adresse",
+    connection: "Verbindung",
+    localAddress: "Lokale Adresse",
+    localAddressHint:
+      "Wird automatisch genutzt, wenn sie erreichbar ist – dann laufen Streams direkt im Heimnetz statt über Tunnel/Proxy. Eine http-Adresse funktioniert nur, wenn Jailfin selbst per http geöffnet ist.",
+    save: "Speichern",
+    activeLocal: "Lokal verbunden",
+    activePublic: "Über öffentliche Adresse verbunden",
+    reasons: {
+      none: "",
+      mixedContent: "Lokale http-Adresse ist von dieser https-Seite aus gesperrt.",
+      unreachable: "Lokale Adresse gerade nicht erreichbar.",
+      otherServer: "Unter der lokalen Adresse läuft ein anderer Server.",
+    },
+    recheck: "Erneut prüfen",
     user: "Angemeldet als",
     logout: "Abmelden",
     hiddenSeries: "Ausgeblendete Serien",

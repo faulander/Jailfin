@@ -36,8 +36,17 @@
 
 <svelte:window
   onclick={interceptLinks}
-  ononline={() => (online = true)}
+  ononline={() => {
+    online = true;
+    void session.refreshConnection();
+  }}
   onoffline={() => (online = false)}
+/>
+<!-- Zurück in der App (z. B. Tablet aus dem Standby, jetzt im Heimnetz): Verbindung neu wählen. -->
+<svelte:document
+  onvisibilitychange={() => {
+    if (document.visibilityState === "visible" && session.status === "authenticated") void session.refreshConnection();
+  }}
 />
 
 {#if session.status === "restoring"}
