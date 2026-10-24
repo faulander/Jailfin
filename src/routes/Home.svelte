@@ -79,14 +79,12 @@
   const nextUp = $derived(
     nextUpRaw.data && hiddenReady ? selectNextUp(nextUpRaw.data, hiddenSeries.ids) : undefined,
   );
-  // „Weiterschauen“ zeigt keine Folgen, die bereits unter „Als nächstes“ stehen (PRD 4.1),
-  // und keine lokal ausgeblendeten Titel.
-  const nextUpIds = $derived(new Set((nextUp ?? []).map((i) => i.Id)));
+  // Eine angefangene Folge steht bei Jellyfin sowohl in Resume als auch in NextUp. Sie bleibt in
+  // beiden Reihen (dort mit Fortschrittsbalken gekennzeichnet), damit „Weiterschauen“ vollständig
+  // ist; ausgeblendet werden nur lokal ausgeblendete Titel.
   const resumeReady = $derived(hiddenResume.ready || !!hiddenResume.error);
   const resumeItems = $derived(
-    resume.data && resumeReady
-      ? selectResume(resume.data, hiddenResume.entries).filter((i) => !nextUpIds.has(i.Id))
-      : [],
+    resume.data && resumeReady ? selectResume(resume.data, hiddenResume.entries) : [],
   );
 
   function nextUpActions(item: BaseItemDto): Action[] {

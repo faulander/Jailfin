@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.3.0] – 2026-10-24
+
+### Hinzugefügt
+
+- Zwei zusätzliche Untertitelgrößen („Riesig“, „Maximal“). Alle Stufen wachsen auf großen Displays jetzt weiter mit, statt bei einer festen Obergrenze zu enden.
+- Player: Doppelklick bzw. Doppeltipp auf das Bild schaltet Vollbild ein und wieder aus.
+
+### Geändert
+
+- Player: Ein Klick bzw. Tipp auf das Bild pausiert bzw. setzt fort und blendet die Steuerung ein.
+
+### Behoben
+
+- Angefangene Folgen fehlten unter „Weiterschauen“, wenn dieselbe Folge auch unter „Als nächstes“ stand. Sie erscheinen jetzt in beiden Reihen.
+
 ## [0.2.0] – 2026-10-24
 
 ### Hinzugefügt
@@ -31,5 +46,6 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.3.0]: https://github.com/faulander/Jailfin/releases/tag/v0.3.0
 [0.2.0]: https://github.com/faulander/Jailfin/releases/tag/v0.2.0
 [0.1.0]: https://github.com/faulander/Jailfin/releases/tag/v0.1.0

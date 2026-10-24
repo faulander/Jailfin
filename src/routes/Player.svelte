@@ -32,6 +32,8 @@
 
   const NEXT_EPISODE_WINDOW_S = 30;
   const HIDE_CONTROLS_MS = 3500;
+  /** Zeitfenster, in dem ein zweiter Klick/Tipp als Doppelklick gilt */
+  const DOUBLE_CLICK_MS = 280;
 
   let video: HTMLVideoElement | undefined = $state();
   let container: HTMLDivElement | undefined = $state();
@@ -67,6 +69,7 @@
   let pendingSeek: number | null = null;
   let triedFallback = false;
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
+  let clickTimer: ReturnType<typeof setTimeout> | undefined;
   let destroyed = false;
 
   const volumeAdjustable = (() => {
@@ -275,13 +278,26 @@
     }, HIDE_CONTROLS_MS);
   }
 
-  /** Tippen auf die freie Fläche blendet die Steuerung ein bzw. aus. */
+  /**
+   * Klick/Tipp auf die freie Fläche: Pause bzw. Weiter und Steuerung einblenden.
+   * Doppelklick/-tipp: Vollbild an/aus. Der einfache Klick wartet kurz, damit ein
+   * Doppelklick nicht zusätzlich zweimal pausiert.
+   */
   function onSurfaceClick(event: MouseEvent) {
     if (event.target !== event.currentTarget) return;
-    if (controlsVisible && phase === "playing") {
-      controlsVisible = false;
-      clearTimeout(hideTimer);
-    } else reveal();
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = undefined;
+      // synchron im Event-Handler: Vollbild erfordert eine Nutzergeste
+      void toggleFullscreen();
+      reveal();
+      return;
+    }
+    clickTimer = setTimeout(() => {
+      clickTimer = undefined;
+      if (phase !== "error" && phase !== "ended") togglePlay();
+      reveal();
+    }, DOUBLE_CLICK_MS);
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -479,6 +495,7 @@
   onDestroy(() => {
     destroyed = true;
     clearTimeout(hideTimer);
+    clearTimeout(clickTimer);
     teardownSource();
     if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
     const doc = document as Document & { webkitFullscreenElement?: Element };
@@ -524,7 +541,6 @@
     ontimeupdate={renderCues}
     onended={onEnded}
     onerror={onError}
-    ondblclick={() => void toggleFullscreen()}
   >
     {#if subtitleUrl}
       {#key subtitleUrl}

@@ -138,7 +138,7 @@ const de = {
     title: "Untertitel",
     hint: "Gilt für alle Textuntertitel auf diesem Gerät.",
     size: "Größe",
-    sizes: { s: "Klein", m: "Mittel", l: "Groß", xl: "Sehr groß" },
+    sizes: { s: "Klein", m: "Mittel", l: "Groß", xl: "Sehr groß", xxl: "Riesig", xxxl: "Maximal" },
     position: "Abstand vom unteren Rand",
     positionValue: (pct: number) => `${pct} %`,
     background: "Hintergrund",

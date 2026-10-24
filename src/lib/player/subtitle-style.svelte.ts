@@ -1,6 +1,6 @@
 /** Darstellung von Textuntertiteln; pro Gerät gespeichert (localStorage). */
 export interface SubtitleStyle {
-  size: "s" | "m" | "l" | "xl";
+  size: "s" | "m" | "l" | "xl" | "xxl" | "xxxl";
   /** Abstand vom unteren Bildrand in Prozent der Videohöhe */
   position: number;
   background: "none" | "shadow" | "box" | "solid";
@@ -21,12 +21,17 @@ export const POSITION_MAX = 45;
 
 const STORAGE_KEY = "jailfin.subtitleStyle.v1";
 
-/** Schriftgröße relativ zur Höhe des Videobereichs (Container-Query-Einheit). */
+/**
+ * Schriftgröße relativ zur Höhe des Videobereichs (Container-Query-Einheit). Die Obergrenzen
+ * liegen bewusst hoch, damit die Stufen auch auf großen Displays sichtbar wachsen.
+ */
 export const FONT_SIZE: Record<SubtitleStyle["size"], string> = {
-  s: "clamp(0.9rem, 3.6cqh, 1.6rem)",
-  m: "clamp(1.05rem, 4.6cqh, 2.1rem)",
-  l: "clamp(1.25rem, 5.8cqh, 2.7rem)",
-  xl: "clamp(1.5rem, 7.2cqh, 3.4rem)",
+  s: "clamp(0.9rem, 3.6cqh, 2.3rem)",
+  m: "clamp(1.05rem, 4.6cqh, 2.9rem)",
+  l: "clamp(1.25rem, 5.8cqh, 3.6rem)",
+  xl: "clamp(1.5rem, 7.2cqh, 4.6rem)",
+  xxl: "clamp(1.8rem, 9cqh, 6rem)",
+  xxxl: "clamp(2.1rem, 11.5cqh, 8rem)",
 };
 
 export const TEXT_COLOR: Record<SubtitleStyle["color"], string> = {
@@ -41,7 +46,7 @@ function sanitize(value: Partial<SubtitleStyle>): SubtitleStyle {
     allowed.includes(value[key] as SubtitleStyle[K]) ? (value[key] as SubtitleStyle[K]) : d[key];
   const position = Number(value.position);
   return {
-    size: pick("size", ["s", "m", "l", "xl"]),
+    size: pick("size", ["s", "m", "l", "xl", "xxl", "xxxl"]),
     background: pick("background", ["none", "shadow", "box", "solid"]),
     color: pick("color", ["white", "yellow", "cyan"]),
     weight: pick("weight", ["normal", "bold"]),
