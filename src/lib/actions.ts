@@ -6,14 +6,24 @@ import { toasts } from "./toast.svelte";
 import { watchlist } from "./watchlist/state.svelte";
 import { describeError } from "./jellyfin/errors";
 
+/** Was auf die Merkliste kommt: Filme und Serien; eine Folge steht für ihre Serie. */
+export function watchlistTarget(item: BaseItemDto): BaseItemDto | undefined {
+  if (item.Type === "Movie" || item.Type === "Series") return item.Id ? item : undefined;
+  if (item.Type === "Episode" && item.SeriesId) {
+    return { Id: item.SeriesId, Type: "Series", Name: item.SeriesName ?? item.Name };
+  }
+  return undefined;
+}
+
 /** Film oder Serie auf die Merkliste setzen bzw. davon entfernen (serverseitig gespeichert). */
 export async function toggleWatchlist(item: BaseItemDto): Promise<void> {
-  if (!item.Id) return;
+  const target = watchlistTarget(item);
+  if (!target?.Id) return;
   try {
-    if (watchlist.has(item.Id)) await watchlist.remove([item.Id]);
+    if (watchlist.has(target.Id)) await watchlist.remove([target.Id]);
     else {
-      await watchlist.add(item);
-      toasts.show(m.detail.watchlistAdded(item.Name ?? ""));
+      await watchlist.add(target);
+      toasts.show(m.detail.watchlistAdded(target.Name ?? ""));
     }
   } catch (error) {
     toasts.show(describeError(error), { tone: "error" });
