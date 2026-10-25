@@ -29,6 +29,8 @@
     alert: "M12 3l10 18H2zM12 10v5M12 18v.01",
     wifiOff: "M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5-2.7M14.5 10.4A10 10 0 0 1 19 13M2 9.5a15 15 0 0 1 4.4-2.8M11 6a15 15 0 0 1 11 3.5M12 20v.01",
     logout: "M10 4H5v16h5M15 8l4 4-4 4M19 12H9",
+    heart: "M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6.1 5 5 0 0 1 21.2 11C19 15.6 12 20 12 20z",
+    bookmark: "M6 3h12v18l-6-4.5L6 21z",
   } as const;
 
   export type IconName = keyof typeof paths;

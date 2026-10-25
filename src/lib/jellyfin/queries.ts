@@ -8,6 +8,7 @@ import type {
 import { getLibraryApi, getShowApi, getUserDataApi } from "@jellyfin/sdk/lib/utils/api";
 import { fetchAllPages, type ItemPage } from "./paging";
 import { session } from "./session.svelte";
+import { userDataVersion } from "./userdata.svelte";
 
 const CARD_FIELDS: ItemFields[] = ["PrimaryImageAspectRatio", "Overview", "DateCreated"];
 const IMAGE_TYPES = ["Primary", "Thumb", "Backdrop"] as const;
@@ -89,7 +90,7 @@ export async function loadLibraryPage(
   startIndex: number,
   limit: number,
   signal?: AbortSignal,
-  { unwatchedOnly = false } = {},
+  { unwatchedOnly = false, favoritesOnly = false } = {},
 ): Promise<ItemPage> {
   const { data } = await getLibraryApi(session.api).getItems(
     {
@@ -97,6 +98,7 @@ export async function loadLibraryPage(
       includeItemTypes: [type],
       // Serien gelten als gesehen, wenn alle Folgen gesehen sind.
       ...(unwatchedOnly ? { isPlayed: false } : {}),
+      ...(favoritesOnly ? { isFavorite: true } : {}),
       recursive: true,
       startIndex,
       limit,
@@ -195,5 +197,34 @@ export async function setPlayed(itemId: string, played: boolean) {
   const { data } = played
     ? await api.markPlayedItem({ itemId, userId: session.userId })
     : await api.markUnplayedItem({ itemId, userId: session.userId });
+  userDataVersion.bump();
   return data;
+}
+
+/** Favorit setzen/entfernen (Jellyfin-Benutzerdaten, gilt für alle Clients). */
+export async function setFavorite(itemId: string, favorite: boolean) {
+  const api = getUserDataApi(session.api);
+  const { data } = favorite
+    ? await api.markFavoriteItem({ itemId, userId: session.userId })
+    : await api.unmarkFavoriteItem({ itemId, userId: session.userId });
+  userDataVersion.bump();
+  return data;
+}
+
+export async function loadFavorites(signal?: AbortSignal): Promise<BaseItemDto[]> {
+  const { data } = await getLibraryApi(session.api).getItems(
+    {
+      ...common(),
+      isFavorite: true,
+      includeItemTypes: ["Movie", "Series"],
+      recursive: true,
+      sortBy: ["SortName"],
+      sortOrder: ["Ascending"],
+      limit: 60,
+      fields: ["PrimaryImageAspectRatio"],
+      enableTotalRecordCount: false,
+    },
+    { signal },
+  );
+  return data.Items ?? [];
 }

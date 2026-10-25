@@ -15,6 +15,7 @@
   import { router } from "../../lib/router.svelte";
   import { toasts } from "../../lib/toast.svelte";
   import DetailHero from "./DetailHero.svelte";
+  import ItemToggles from "./ItemToggles.svelte";
 
   let { series }: { series: BaseItemDto } = $props();
 
@@ -133,6 +134,7 @@
       <Icon name="check" size={20} />
       {played ? m.detail.markUnplayed : m.detail.markPlayed}
     </button>
+    <ItemToggles item={series} />
   </div>
   {#if hidden}<p class="muted note">{m.detail.hiddenFromNextUp}</p>{/if}
 

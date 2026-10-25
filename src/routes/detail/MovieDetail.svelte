@@ -9,6 +9,7 @@
   import { setPlayed } from "../../lib/jellyfin/queries";
   import { toasts } from "../../lib/toast.svelte";
   import DetailHero from "./DetailHero.svelte";
+  import ItemToggles from "./ItemToggles.svelte";
 
   let { item, onchange }: { item: BaseItemDto; onchange: (item: BaseItemDto) => void } = $props();
 
@@ -70,6 +71,7 @@
       <Icon name="check" size={20} />
       {played ? m.detail.markUnplayed : m.detail.markPlayed}
     </button>
+    <ItemToggles {item} />
   </div>
 
   {#if item.Overview}

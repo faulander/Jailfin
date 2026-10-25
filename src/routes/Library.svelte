@@ -10,9 +10,11 @@
   interface ViewPrefs {
     sort: LibrarySort;
     unwatchedOnly: boolean;
+    favoritesOnly: boolean;
   }
 
-  // Geladene Seiten bleiben erhalten, damit „Zurück“ Position und Inhalt behält.
+  // Geladene Seiten bleiben erhalten, damit „Zurück“ Position und Inhalt behält. Der Schlüssel
+  // enthält die Benutzerdaten-Version: nach „gesehen“/„Favorit“-Änderungen wird neu geladen.
   const cache = new Map<string, Loaded>();
   const PAGE_SIZE = 60;
   const SORT_VALUES: LibrarySort[] = ["title", "year", "added", "rating"];
@@ -27,9 +29,12 @@
       // ungültige Daten ignorieren
     }
     const sortParam = query.get("sort") ?? stored.sort;
+    // Ohne Query-Parameter (Aufruf über die Navigation) gilt die gespeicherte Ansicht.
+    const fromUrl = query.has("sort") || query.has("unwatched") || query.has("fav");
     return {
       sort: SORT_VALUES.includes(sortParam as LibrarySort) ? (sortParam as LibrarySort) : "title",
-      unwatchedOnly: query.has("unwatched") || (!query.has("sort") && stored.unwatchedOnly === true),
+      unwatchedOnly: fromUrl ? query.has("unwatched") : stored.unwatchedOnly === true,
+      favoritesOnly: fromUrl ? query.has("fav") : stored.favoritesOnly === true,
     };
   }
 </script>
@@ -42,6 +47,7 @@
   import { m } from "../lib/i18n";
   import { loadLibraryPage } from "../lib/jellyfin/queries";
   import { session } from "../lib/jellyfin/session.svelte";
+  import { userDataVersion } from "../lib/jellyfin/userdata.svelte";
   import { router } from "../lib/router.svelte";
 
   let { type }: { type: "Movie" | "Series" } = $props();
@@ -56,6 +62,7 @@
   const initial = untrack(() => initialPrefs(type, router.query));
   let sort = $state<LibrarySort>(initial.sort);
   let unwatchedOnly = $state(initial.unwatchedOnly);
+  let favoritesOnly = $state(initial.favoritesOnly);
   let items = $state<BaseItemDto[]>([]);
   let total = $state(0);
   let loading = $state(false);
@@ -63,7 +70,15 @@
   let controller: AbortController | undefined;
 
   const key = $derived(
-    `${session.current?.serverId}/${session.userId}/${type}/${sort}/${unwatchedOnly ? "unwatched" : "all"}`,
+    [
+      session.current?.serverId,
+      session.userId,
+      type,
+      sort,
+      unwatchedOnly ? "unwatched" : "all",
+      favoritesOnly ? "fav" : "",
+      `v${userDataVersion.value}`,
+    ].join("/"),
   );
 
   async function loadMore() {
@@ -73,7 +88,10 @@
     const requestKey = key;
     const signal = controller?.signal;
     try {
-      const page = await loadLibraryPage(type, sort, items.length, PAGE_SIZE, signal, { unwatchedOnly });
+      const page = await loadLibraryPage(type, sort, items.length, PAGE_SIZE, signal, {
+        unwatchedOnly,
+        favoritesOnly,
+      });
       if (requestKey !== key) return;
       items = [...items, ...(page.Items ?? [])];
       total = page.TotalRecordCount ?? items.length;
@@ -92,6 +110,8 @@
       controller?.abort();
       controller = new AbortController();
       const hit = cache.get(k);
+      // Veraltete Einträge (ältere Benutzerdaten-Version) verwerfen.
+      for (const old of cache.keys()) if (!old.endsWith(`/v${userDataVersion.value}`)) cache.delete(old);
       loading = false;
       if (hit) {
         items = hit.items;
@@ -109,8 +129,16 @@
   function applyView(next: Partial<ViewPrefs>) {
     if (next.sort) sort = next.sort;
     if (next.unwatchedOnly != null) unwatchedOnly = next.unwatchedOnly;
-    router.setQuery({ sort: sort === "title" ? null : sort, unwatched: unwatchedOnly ? "1" : null });
-    localStorage.setItem(prefsKey(type), JSON.stringify({ sort, unwatchedOnly } satisfies ViewPrefs));
+    if (next.favoritesOnly != null) favoritesOnly = next.favoritesOnly;
+    router.setQuery({
+      sort: sort === "title" ? null : sort,
+      unwatched: unwatchedOnly ? "1" : null,
+      fav: favoritesOnly ? "1" : null,
+    });
+    localStorage.setItem(
+      prefsKey(type),
+      JSON.stringify({ sort, unwatchedOnly, favoritesOnly } satisfies ViewPrefs),
+    );
     scrollTo(0, 0);
   }
 
@@ -143,6 +171,15 @@
         <Icon name="eyeOff" size={18} />
         {m.library.hideWatched}
       </button>
+      <button
+        type="button"
+        class="chip filter"
+        aria-pressed={favoritesOnly}
+        onclick={() => applyView({ favoritesOnly: !favoritesOnly })}
+      >
+        <Icon name="heart" size={18} />
+        {m.library.favoritesOnly}
+      </button>
     </div>
   </header>
 
@@ -154,7 +191,7 @@
     {error}
     onretry={loadMore}
     empty={!loading && !error && items.length === 0
-      ? unwatchedOnly
+      ? unwatchedOnly || favoritesOnly
         ? m.library.emptyFiltered
         : m.library.empty
       : undefined}

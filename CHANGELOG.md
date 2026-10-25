@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.0] – 2026-10-25
+
+### Hinzugefügt
+
+- **Merkliste:** Filme und Serien über „Merken“ auf der Detailseite vormerken. Sie erscheinen in einer eigenen Reihe „Merkliste“ auf der Startseite. Sobald eine Folge der Serie gesehen bzw. angefangen oder der Film gestartet ist, verlässt der Titel die Merkliste automatisch, auch wenn auf einem anderen Gerät oder Client geschaut wurde; er steht dann unter „Als nächstes“ bzw. „Weiterschauen“. Gespeichert wird in den Jellyfin-Anzeigeeinstellungen des Benutzers, also auf allen Geräten gleich.
+- **Favoriten:** Filme und Serien (auch Folgen) auf der Detailseite als Favorit markieren (Jellyfin-Favoriten). Dazu eine Reihe „Favoriten“ auf der Startseite und der Filter „Nur Favoriten“ in Filme/Serien.
+
+### Behoben
+
+- Nach „Als gesehen markieren“, nach Favoriten-Änderungen oder nach einer Wiedergabe zeigten Filme/Serien mit Filter „Gesehene ausblenden“ veraltete Ergebnisse aus dem Zwischenspeicher. Die Listen werden jetzt neu geladen.
+
 ## [0.4.0] – 2026-10-24
 
 Schwerpunkt: weniger Transcoding auf dem Server, damit Streams nicht mehr ruckeln.
@@ -74,6 +85,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.5.0]: https://github.com/faulander/Jailfin/releases/tag/v0.5.0
 [0.4.0]: https://github.com/faulander/Jailfin/releases/tag/v0.4.0
 [0.3.2]: https://github.com/faulander/Jailfin/releases/tag/v0.3.2
 [0.3.1]: https://github.com/faulander/Jailfin/releases/tag/v0.3.1

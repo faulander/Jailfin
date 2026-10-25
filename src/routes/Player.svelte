@@ -27,6 +27,7 @@
     type Playback,
     type PlaybackRequest,
   } from "../lib/player/playback";
+  import { watchlist } from "../lib/watchlist/state.svelte";
   import { PlaybackReporter } from "../lib/player/reporter";
   import { subtitleSettings } from "../lib/player/subtitle-style.svelte";
   import { router } from "../lib/router.svelte";
@@ -235,6 +236,9 @@
     phase = "playing";
     buffering = false;
     reporter?.start();
+    // Gestartete Filme/Serien gehören jetzt zu „Weiterschauen“/„Als nächstes“, nicht mehr auf die Merkliste.
+    const ids = [item?.Id, item?.SeriesId].filter((id): id is string => !!id);
+    if (watchlist.ready) void watchlist.remove(ids).catch(() => undefined);
     scheduleHide();
   }
 

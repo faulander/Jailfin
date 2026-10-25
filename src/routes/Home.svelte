@@ -2,7 +2,14 @@
   import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
   // Letzte Ergebnisse für sofortige Anzeige bei Rückkehr; aktualisiert wird trotzdem immer (NU-08).
-  const cache: { nextUp?: BaseItemDto[]; resume?: BaseItemDto[]; latest?: BaseItemDto[]; key?: string } = {};
+  const cache: {
+    nextUp?: BaseItemDto[];
+    resume?: BaseItemDto[];
+    latest?: BaseItemDto[];
+    favorites?: BaseItemDto[];
+    watch?: BaseItemDto[];
+    key?: string;
+  } = {};
 </script>
 
 <script lang="ts">
@@ -15,11 +22,13 @@
   import { hideFromNextUp, hideFromResume, play } from "../lib/actions";
   import { hasResumePosition } from "../lib/format";
   import { m } from "../lib/i18n";
-  import { loadLatest, loadNextUp, loadResume } from "../lib/jellyfin/queries";
+  import { loadFavorites, loadItemsByIds, loadLatest, loadNextUp, loadResume } from "../lib/jellyfin/queries";
   import { session } from "../lib/jellyfin/session.svelte";
   import { selectNextUp, selectResume } from "../lib/hidden/filters";
   import { hiddenResume, hiddenSeries } from "../lib/hidden/state.svelte";
   import { router } from "../lib/router.svelte";
+  import { watchlist } from "../lib/watchlist/state.svelte";
+  import { activityFrom, isStarted } from "../lib/watchlist/watchlist";
 
   type Section<T> = { data?: T; error?: unknown; loading: boolean };
 
@@ -30,6 +39,8 @@
   let nextUpRaw = $state<Section<BaseItemDto[]>>({ data: cached.nextUp, loading: !cached.nextUp });
   let resume = $state<Section<BaseItemDto[]>>({ data: cached.resume, loading: !cached.resume });
   let latest = $state<Section<BaseItemDto[]>>({ data: cached.latest, loading: !cached.latest });
+  let favorites = $state<Section<BaseItemDto[]>>({ data: cached.favorites, loading: !cached.favorites });
+  let watchItems = $state<Section<BaseItemDto[]>>({ data: cached.watch, loading: !cached.watch });
 
   let controller: AbortController | undefined;
 
@@ -57,7 +68,9 @@
       track(loadNextUp(signal), (s) => (nextUpRaw = s), () => nextUpRaw, (v) => (cache.nextUp = v)),
       track(loadResume(signal), (s) => (resume = s), () => resume, (v) => (cache.resume = v)),
       track(loadLatest(signal), (s) => (latest = s), () => latest, (v) => (cache.latest = v)),
+      track(loadFavorites(signal), (s) => (favorites = s), () => favorites, (v) => (cache.favorites = v)),
     ];
+    loadWatch();
     Promise.allSettled(all).then(async () => {
       await tick();
       router.restoreScroll();
@@ -68,6 +81,47 @@
     // untrack: load() liest die Abschnittszustände, die es selbst schreibt.
     untrack(load);
     return () => controller?.abort();
+  });
+
+  // ---- Merkliste ------------------------------------------------------------
+
+  const watchIds = $derived(watchlist.entries.map((e) => e.id).join(","));
+  let watchController: AbortController | undefined;
+
+  /** Aktuelle Serverdaten (Bild, gesehen/angefangen) der vorgemerkten Titel laden. */
+  function loadWatch() {
+    if (!watchlist.ready) return;
+    watchController?.abort();
+    watchController = new AbortController();
+    const ids = watchlist.entries.map((e) => e.id);
+    track(
+      loadItemsByIds(ids, watchController.signal),
+      (s) => (watchItems = s),
+      () => watchItems,
+      (v) => (cache.watch = v),
+    );
+  }
+
+  $effect(() => {
+    void watchIds;
+    if (!watchlist.ready) return;
+    untrack(loadWatch);
+    return () => watchController?.abort();
+  });
+
+  // Reihenfolge der Merkliste (zuletzt vorgemerkt zuletzt) statt Serverreihenfolge.
+  const watchList = $derived.by(() => {
+    const byId = new Map((watchItems.data ?? []).map((i) => [i.Id, i]));
+    return watchlist.entries.flatMap((e) => byId.get(e.id) ?? []);
+  });
+
+  // Sobald eine Folge gesehen bzw. der Film gestartet ist, wandert der Titel nach „Als nächstes“
+  // bzw. „Weiterschauen“ und verlässt die Merkliste.
+  $effect(() => {
+    if (!nextUpRaw.data || !resume.data || !watchItems.data) return;
+    const activity = activityFrom(nextUpRaw.data, resume.data);
+    const started = watchItems.data.filter((i) => isStarted(i, activity)).flatMap((i) => i.Id ?? []);
+    if (started.length) untrack(() => void watchlist.remove(started).catch(() => undefined));
   });
 
   // Rückkehr in die App (Tab/PWA wieder sichtbar) lädt die Listen neu.
@@ -152,6 +206,21 @@
     </div>
   {/if}
 
+  <Shelf title={m.home.watchlist} kind="poster">
+    {#each watchList as item (item.Id)}
+      <PosterCard {item} />
+    {/each}
+  </Shelf>
+  <div class="state">
+    <StateView
+      compact
+      loading={!watchlist.ready || (watchItems.loading && watchlist.entries.length > 0)}
+      error={watchlist.error ?? watchItems.error}
+      onretry={load}
+      empty={watchlist.ready && watchlist.entries.length === 0 ? m.home.watchlistEmpty : undefined}
+    />
+  </div>
+
   <Shelf title={m.home.latest} kind="poster">
     {#each latest.data ?? [] as item (item.Id)}
       <PosterCard {item} />
@@ -166,6 +235,17 @@
       empty={latest.data && latest.data.length === 0 ? m.home.latestEmpty : undefined}
     />
   </div>
+
+  {#if (favorites.data?.length ?? 0) > 0 || favorites.error}
+    <Shelf title={m.home.favorites} kind="poster">
+      {#each favorites.data ?? [] as item (item.Id)}
+        <PosterCard {item} />
+      {/each}
+    </Shelf>
+    <div class="state">
+      <StateView compact error={favorites.error} onretry={load} />
+    </div>
+  {/if}
 </div>
 
 <style>

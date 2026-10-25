@@ -7,10 +7,12 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 ## Funktionen
 
 - Anmeldung an einem eigenen Jellyfin-Server (HTTP/HTTPS, Adresse auch ohne Schema), Sitzung bleibt bis zum Abmelden erhalten.
-- Startseite: **Als nächstes**, **Weiterschauen**, **Zuletzt hinzugefügt**. Eine angefangene Folge erscheint in beiden ersten Reihen, jeweils mit Fortschrittsbalken. Die Reihen lassen sich wischen, mit großen Pfeil-Buttons blättern oder über eine breite Scrollleiste ziehen.
+- Startseite: **Als nächstes**, **Weiterschauen**, **Merkliste**, **Zuletzt hinzugefügt**, **Favoriten**. Eine angefangene Folge erscheint in den ersten beiden Reihen, jeweils mit Fortschrittsbalken. Die Reihen lassen sich wischen, mit großen Pfeil-Buttons blättern oder über eine breite Scrollleiste ziehen.
+- **Merkliste:** Filme und Serien auf der Detailseite „merken“. Sobald eine Folge gesehen bzw. angefangen oder der Film gestartet ist (auch in anderen Clients), verlässt der Titel die Merkliste automatisch und steht unter „Als nächstes“ bzw. „Weiterschauen“. Gespeichert wird in den Jellyfin-Anzeigeeinstellungen des Benutzers (DisplayPreferences, Client `jailfin`), also auf allen Geräten gleich und ohne eigenes Backend.
+- **Favoriten:** Detailseite → „Favorit“ (Jellyfin-Favoriten, in allen Clients sichtbar), Filter „Nur Favoriten“ in Filme/Serien.
 - Serien aus „Als nächstes“ ausblenden: über das ⋮-Menü bzw. per Long-Press auf der Karte oder auf der Serienseite. Danach kann die Aktion rückgängig gemacht werden. Verwalten lassen sich die Ausblendungen unter _Einstellungen → Ausgeblendete Serien_.
 - Titel aus „Weiterschauen“ ausblenden (⋮-Menü bzw. Long-Press). Sie kommen zurück, sobald du sie erneut ansiehst; verwalten unter _Einstellungen → Aus „Weiterschauen“ ausgeblendet_.
-- Filme und Serien als Raster mit inkrementellem Nachladen, Sortierung nach Titel, Jahr, Hinzufügedatum oder Bewertung und dem Filter „Gesehene ausblenden“ (Serien gelten als gesehen, wenn alle Folgen gesehen sind). Die gewählte Ansicht bleibt pro Bibliothek gespeichert. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
+- Filme und Serien als Raster mit inkrementellem Nachladen, Sortierung nach Titel, Jahr, Hinzufügedatum oder Bewertung und den Filtern „Gesehene ausblenden“ (Serien gelten als gesehen, wenn alle Folgen gesehen sind) und „Nur Favoriten“. Die gewählte Ansicht bleibt pro Bibliothek gespeichert. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
 - Player:
   - Wiedergabe: Direct Play, bei Bedarf Transcoding über HLS (iPad nativ, sonst hls.js); Fortsetzen an der gespeicherten Position.
   - Bedienung: Klick/Tipp aufs Bild pausiert bzw. setzt fort, Doppelklick/-tipp schaltet Vollbild um. Dazu Spulen −10/+30 s, Lautstärke, Vollbild-Button, Tastatur (Leertaste/K, ←/→, F, M, G/H für Untertitel-Versatz).

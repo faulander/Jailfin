@@ -3,6 +3,22 @@ import { hiddenResume, hiddenSeries } from "./hidden/state.svelte";
 import { m } from "./i18n";
 import { router } from "./router.svelte";
 import { toasts } from "./toast.svelte";
+import { watchlist } from "./watchlist/state.svelte";
+import { describeError } from "./jellyfin/errors";
+
+/** Film oder Serie auf die Merkliste setzen bzw. davon entfernen (serverseitig gespeichert). */
+export async function toggleWatchlist(item: BaseItemDto): Promise<void> {
+  if (!item.Id) return;
+  try {
+    if (watchlist.has(item.Id)) await watchlist.remove([item.Id]);
+    else {
+      await watchlist.add(item);
+      toasts.show(m.detail.watchlistAdded(item.Name ?? ""));
+    }
+  } catch (error) {
+    toasts.show(describeError(error), { tone: "error" });
+  }
+}
 
 /** Öffnet den Player; ohne `fromStart` wird an der gespeicherten Position fortgesetzt. */
 export function play(item: BaseItemDto, { fromStart = false } = {}): void {

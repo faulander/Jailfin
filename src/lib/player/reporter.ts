@@ -2,6 +2,7 @@ import type { PlaybackProgressInfo } from "@jellyfin/sdk/lib/generated-client/mo
 import { getSessionApi } from "@jellyfin/sdk/lib/utils/api";
 import { secondsToTicks } from "../format";
 import { session } from "../jellyfin/session.svelte";
+import { userDataVersion } from "../jellyfin/userdata.svelte";
 import type { Playback } from "./playback";
 
 export interface PlayerState {
@@ -75,6 +76,8 @@ export class PlaybackReporter {
     if (!this.#started || this.#stopped) return;
     this.#stopped = true;
     clearInterval(this.#timer);
+    // Fortschritt/„gesehen“ ändern sich serverseitig – gecachte Listen neu laden.
+    userDataVersion.bump();
     const api = session.api;
     const { ItemId, MediaSourceId, PlaySessionId, PositionTicks, LiveStreamId } = this.#info();
     void fetch(`${api.basePath}/Sessions/Playing/Stopped`, {
