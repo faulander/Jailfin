@@ -3,6 +3,9 @@
   import { toggleWatchlist, watchlistTarget } from "../lib/actions";
   import { m } from "../lib/i18n";
   import { posterUrl } from "../lib/jellyfin/images";
+  import { describeError } from "../lib/jellyfin/errors";
+  import { setFavorite } from "../lib/jellyfin/queries";
+  import { toasts } from "../lib/toast.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
   import Icon from "./Icon.svelte";
   import Img from "./Img.svelte";
@@ -31,6 +34,25 @@
         (item.Type === "Series" && (item.UserData?.PlayedPercentage ?? 0) > 0)),
   );
   const canWatchlist = $derived(!!watchTarget && watchlist.ready && (onWatchlist || !started));
+
+  // Favorit direkt aus der Übersicht (Folgen-Poster stehen für ihre Serie).
+  let favoriteOverride = $state<boolean>();
+  let favoriteBusy = $state(false);
+  const favorite = $derived(favoriteOverride ?? (!isEpisode && !!item.UserData?.IsFavorite));
+
+  async function toggleFavorite() {
+    const id = watchTarget?.Id;
+    if (!id || favoriteBusy) return;
+    favoriteBusy = true;
+    try {
+      const data = await setFavorite(id, !favorite);
+      favoriteOverride = !!data.IsFavorite;
+    } catch (e) {
+      toasts.show(describeError(e), { tone: "error" });
+    } finally {
+      favoriteBusy = false;
+    }
+  }
 </script>
 
 <div class="poster">
@@ -50,17 +72,32 @@
       {#if showRating && item.CommunityRating}<span class="rating">★ {item.CommunityRating.toFixed(1)}</span>{/if}
     </span>
   </a>
-  {#if canWatchlist}
-    <button
-      class="mark"
-      class:on={onWatchlist}
-      type="button"
-      aria-pressed={onWatchlist}
-      aria-label={`${onWatchlist ? m.detail.watchlistRemoveLabel : m.detail.watchlistAddLabel}: ${title}`}
-      onclick={() => toggleWatchlist(item)}
-    >
-      <span class="mark-icon"><Icon name="bookmark" size={18} /></span>
-    </button>
+  {#if watchTarget}
+    <div class="quick">
+      {#if canWatchlist}
+        <button
+          class="mark"
+          class:on={onWatchlist}
+          type="button"
+          aria-pressed={onWatchlist}
+          aria-label={`${onWatchlist ? m.detail.watchlistRemoveLabel : m.detail.watchlistAddLabel}: ${title}`}
+          onclick={() => toggleWatchlist(item)}
+        >
+          <span class="mark-icon"><Icon name="bookmark" size={18} /></span>
+        </button>
+      {/if}
+      <button
+        class="mark"
+        class:on={favorite}
+        type="button"
+        aria-pressed={favorite}
+        aria-label={`${favorite ? m.detail.removeFavorite : m.detail.addFavorite}: ${title}`}
+        disabled={favoriteBusy}
+        onclick={toggleFavorite}
+      >
+        <span class="mark-icon"><Icon name="heart" size={18} /></span>
+      </button>
+    </div>
   {/if}
 </div>
 
@@ -110,11 +147,15 @@
     background: var(--color-success);
   }
 
-  /* Merken-Button oben links auf dem Poster (rechts sitzen die Gesehen-Badges): 48 px Trefferfläche */
-  .mark {
+  /* Merken/Favorit oben links auf dem Poster (rechts sitzen die Gesehen-Badges): je 48 px Trefferfläche */
+  .quick {
     position: absolute;
     top: 0;
     left: 0;
+    display: grid;
+  }
+
+  .mark {
     width: var(--touch);
     height: var(--touch);
     display: grid;
@@ -123,6 +164,10 @@
     border: 0;
     background: transparent;
     color: white;
+  }
+
+  .mark + .mark {
+    margin-top: -6px;
   }
 
   .mark-icon {

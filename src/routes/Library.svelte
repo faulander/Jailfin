@@ -5,6 +5,8 @@
   interface Loaded {
     items: BaseItemDto[];
     total: number;
+    /** Benutzerdaten-Version beim Laden (siehe userdata.svelte.ts) */
+    version: number;
   }
 
   interface ViewPrefs {
@@ -13,8 +15,8 @@
     favoritesOnly: boolean;
   }
 
-  // Geladene Seiten bleiben erhalten, damit „Zurück“ Position und Inhalt behält. Der Schlüssel
-  // enthält die Benutzerdaten-Version: nach „gesehen“/„Favorit“-Änderungen wird neu geladen.
+  // Geladene Seiten bleiben erhalten, damit „Zurück“ Position und Inhalt behält. Nach
+  // „gesehen“/„Favorit“-Änderungen (neue Benutzerdaten-Version) wird beim nächsten Aufruf neu geladen.
   const cache = new Map<string, Loaded>();
   const PAGE_SIZE = 60;
   const SORT_VALUES: LibrarySort[] = ["title", "year", "added", "rating"];
@@ -69,6 +71,8 @@
   let error = $state<unknown>(null);
   let controller: AbortController | undefined;
 
+  // Ohne Benutzerdaten-Version: Ein Favoriten-/Merken-Tipp im Raster soll die Liste nicht neu
+  // aufbauen. Die Version wird beim Lesen aus dem Cache geprüft (nächster Aufruf lädt frisch).
   const key = $derived(
     [
       session.current?.serverId,
@@ -77,7 +81,6 @@
       sort,
       unwatchedOnly ? "unwatched" : "all",
       favoritesOnly ? "fav" : "",
-      `v${userDataVersion.value}`,
     ].join("/"),
   );
 
@@ -95,7 +98,7 @@
       if (requestKey !== key) return;
       items = [...items, ...(page.Items ?? [])];
       total = page.TotalRecordCount ?? items.length;
-      cache.set(requestKey, { items, total });
+      cache.set(requestKey, { items, total, version: userDataVersion.value });
     } catch (e) {
       if (!signal?.aborted && requestKey === key) error = e;
     } finally {
@@ -109,9 +112,9 @@
     untrack(() => {
       controller?.abort();
       controller = new AbortController();
-      const hit = cache.get(k);
-      // Veraltete Einträge (ältere Benutzerdaten-Version) verwerfen.
-      for (const old of cache.keys()) if (!old.endsWith(`/v${userDataVersion.value}`)) cache.delete(old);
+      const cached = cache.get(k);
+      // Nach „gesehen“/„Favorit“-Änderungen sind gefilterte Listen veraltet: dann neu laden.
+      const hit = cached?.version === userDataVersion.value ? cached : undefined;
       loading = false;
       if (hit) {
         items = hit.items;

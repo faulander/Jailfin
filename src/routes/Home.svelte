@@ -28,6 +28,7 @@
   import { hiddenResume, hiddenSeries } from "../lib/hidden/state.svelte";
   import { router } from "../lib/router.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
+  import { userDataVersion } from "../lib/jellyfin/userdata.svelte";
   import { activityFrom, isStarted } from "../lib/watchlist/watchlist";
 
   type Section<T> = { data?: T; error?: unknown; loading: boolean };
@@ -68,7 +69,7 @@
       track(loadNextUp(signal), (s) => (nextUpRaw = s), () => nextUpRaw, (v) => (cache.nextUp = v)),
       track(loadResume(signal), (s) => (resume = s), () => resume, (v) => (cache.resume = v)),
       track(loadLatest(signal), (s) => (latest = s), () => latest, (v) => (cache.latest = v)),
-      track(loadFavorites(signal), (s) => (favorites = s), () => favorites, (v) => (cache.favorites = v)),
+      loadFavoritesRow(signal),
     ];
     loadWatch();
     Promise.allSettled(all).then(async () => {
@@ -81,6 +82,21 @@
     // untrack: load() liest die Abschnittszustände, die es selbst schreibt.
     untrack(load);
     return () => controller?.abort();
+  });
+
+  // ---- Favoriten --------------------------------------------------------------
+
+  let favoritesVersion = -1;
+
+  function loadFavoritesRow(signal?: AbortSignal) {
+    favoritesVersion = userDataVersion.value;
+    return track(loadFavorites(signal), (s) => (favorites = s), () => favorites, (v) => (cache.favorites = v));
+  }
+
+  // Favorit auf einem Poster der Startseite umgeschaltet: nur die Favoriten-Reihe neu laden.
+  $effect(() => {
+    const version = userDataVersion.value;
+    if (favoritesVersion !== -1 && version !== favoritesVersion) untrack(() => void loadFavoritesRow());
   });
 
   // ---- Merkliste ------------------------------------------------------------
