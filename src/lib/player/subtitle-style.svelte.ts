@@ -1,6 +1,6 @@
 import { readCustomPrefs, updateCustomPrefs } from "../jellyfin/user-prefs";
 
-/** Darstellung von Textuntertiteln; pro Gerät gespeichert (localStorage). */
+/** Darstellung von Textuntertiteln; lokal und in den Jellyfin-Benutzereinstellungen gespeichert. */
 export interface SubtitleStyle {
   size: "s" | "m" | "l" | "xl" | "xxl" | "xxxl";
   /** Abstand vom unteren Bildrand in Prozent der Videohöhe */

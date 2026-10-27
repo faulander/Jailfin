@@ -153,7 +153,7 @@ const de = {
   },
   subtitleStyle: {
     title: "Untertitel",
-    hint: "Gilt für alle Textuntertitel auf diesem Gerät.",
+    hint: "Gilt für alle Textuntertitel und wird mit deinem Jellyfin-Konto gespeichert (auf allen Geräten gleich).",
     size: "Größe",
     sizes: { s: "Klein", m: "Mittel", l: "Groß", xl: "Sehr groß", xxl: "Riesig", xxxl: "Maximal" },
     position: "Abstand vom unteren Rand",
