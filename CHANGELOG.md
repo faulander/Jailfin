@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.5] – 2026-10-27
+
+### Behoben
+
+- Player: Die Leertaste schaltete nach einem Klick auf den Vollbild-Button (bzw. einen anderen Button) in manchen Browsern weiter diesen Button um, statt zu pausieren. Buttons behalten nach Maus-/Touch-Klicks keinen Fokus mehr, und die Leertaste wird auch beim Loslassen abgefangen.
+
 ## [0.5.4] – 2026-10-27
 
 ### Geändert
@@ -114,6 +120,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.5.5]: https://github.com/faulander/Jailfin/releases/tag/v0.5.5
 [0.5.4]: https://github.com/faulander/Jailfin/releases/tag/v0.5.4
 [0.5.3]: https://github.com/faulander/Jailfin/releases/tag/v0.5.3
 [0.5.2]: https://github.com/faulander/Jailfin/releases/tag/v0.5.2

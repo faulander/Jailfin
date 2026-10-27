@@ -342,6 +342,24 @@
     }, DOUBLE_CLICK_MS);
   }
 
+  /**
+   * Manche Browser (z. B. Firefox, Safari) lösen einen fokussierten Button erst beim Loslassen
+   * der Leertaste aus – unabhängig von keydown. Darum auch keyup abfangen, sonst schaltet Space
+   * nach einem Klick auf „Vollbild“ das Vollbild um statt zu pausieren.
+   */
+  function onKeyup(event: KeyboardEvent) {
+    if (audioMenu || subtitleMenu || event.key !== " ") return;
+    if ((event.target as HTMLElement | null)?.closest?.("input:not([type=range]), textarea")) return;
+    event.preventDefault();
+  }
+
+  /** Nach Maus-/Touch-Klick keinen Fokus auf Steuerungs-Buttons lassen (Tastatur-Fokus bleibt). */
+  function dropPointerFocus(event: MouseEvent) {
+    if (event.detail === 0) return; // per Tastatur ausgelöst
+    const button = (event.target as HTMLElement | null)?.closest?.("button");
+    if (button && !button.closest("dialog")) button.blur();
+  }
+
   function onKeydown(event: KeyboardEvent) {
     if (audioMenu || subtitleMenu || event.ctrlKey || event.metaKey || event.altKey) return;
     if ((event.target as HTMLElement | null)?.closest?.("input[type=range]") && event.key.startsWith("Arrow")) return;
@@ -579,13 +597,14 @@
   });
 </script>
 
-<svelte:window onkeydown={onKeydown} onpagehide={() => reporter?.stop()} />
+<svelte:window onkeydown={onKeydown} onkeyup={onKeyup} onpagehide={() => reporter?.stop()} />
 <svelte:document onfullscreenchange={onFullscreenChange} />
 
 <div
   class="player"
   class:hide-cursor={!controlsVisible}
   bind:this={container}
+  onclickcapture={dropPointerFocus}
   onpointermove={(e) => {
     if (e.pointerType === "mouse") reveal();
   }}
