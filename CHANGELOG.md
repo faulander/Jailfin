@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.3] – 2026-10-27
+
+### Behoben
+
+- Player: Die Leertaste (und K) pausiert bzw. setzt jetzt immer fort. Bisher löste sie nach einem Mausklick auf einen Steuerungs-Button (z. B. „10 s zurück“, „Stumm“) diesen Button erneut aus. Gedrückt gehaltene Taste schaltet nicht mehr mehrfach um.
+
 ## [0.5.2] – 2026-10-25
 
 ### Hinzugefügt
@@ -101,6 +107,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.5.3]: https://github.com/faulander/Jailfin/releases/tag/v0.5.3
 [0.5.2]: https://github.com/faulander/Jailfin/releases/tag/v0.5.2
 [0.5.1]: https://github.com/faulander/Jailfin/releases/tag/v0.5.1
 [0.5.0]: https://github.com/faulander/Jailfin/releases/tag/v0.5.0

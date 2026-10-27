@@ -353,7 +353,12 @@
     };
     const handler = handlers[event.key];
     if (!handler) return;
-    if ((event.target as HTMLElement | null)?.tagName === "BUTTON" && event.key === " ") return;
+    // Leertaste pausiert immer – auch wenn nach einem Mausklick noch ein Steuerungs-Button den
+    // Fokus hat (sonst würde der Browser diesen Button erneut auslösen, z. B. „10 s zurück“).
+    if (event.repeat && (event.key === " " || event.key === "k")) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
     handler();
     reveal();
