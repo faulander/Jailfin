@@ -6,6 +6,7 @@
   import { hiddenResume, hiddenSeries } from "./lib/hidden/state.svelte";
   import { interceptLinks, router } from "./lib/router.svelte";
   import { watchlist } from "./lib/watchlist/state.svelte";
+  import { subtitleSettings } from "./lib/player/subtitle-style.svelte";
   import Home from "./routes/Home.svelte";
   import Item from "./routes/Item.svelte";
   import Library from "./routes/Library.svelte";
@@ -26,11 +27,13 @@
     }
   });
 
-  // Merkliste liegt auf dem Server; laden, sobald die Verbindung gewählt ist.
+  // Merkliste und Untertitel-Einstellungen liegen auf dem Server; laden, sobald angemeldet.
   $effect(() => {
     const scope = session.scope;
-    if (scope && session.status === "authenticated") void watchlist.load(scope);
-    else if (!scope) watchlist.reset();
+    if (scope && session.status === "authenticated") {
+      void watchlist.load(scope);
+      void subtitleSettings.syncFromServer();
+    } else if (!scope) watchlist.reset();
   });
 
   $effect(() => {

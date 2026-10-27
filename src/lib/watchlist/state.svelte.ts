@@ -1,24 +1,13 @@
-import type { BaseItemDto, DisplayPreferencesDto } from "@jellyfin/sdk/lib/generated-client/models";
-import { getDisplayPreferenceApi } from "@jellyfin/sdk/lib/utils/api";
-import { session, type UserScope } from "../jellyfin/session.svelte";
+import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import type { UserScope } from "../jellyfin/session.svelte";
+import { readCustomPrefs, updateCustomPrefs } from "../jellyfin/user-prefs";
 import { parseWatchlist, type WatchlistEntry } from "./watchlist";
 
 /**
- * Die Merkliste liegt in den Jellyfin-Anzeigeeinstellungen des Benutzers (DisplayPreferences,
- * Client „jailfin“). Damit ist sie auf allen Geräten gleich, ohne eigenes Backend.
+ * Die Merkliste liegt in den Jellyfin-Anzeigeeinstellungen des Benutzers (siehe user-prefs.ts).
+ * Damit ist sie auf allen Geräten gleich, ohne eigenes Backend.
  */
-const PREFS_ID = "jailfin";
-const CLIENT = "jailfin";
 const KEY = "watchlist";
-
-async function readPrefs(): Promise<DisplayPreferencesDto> {
-  const { data } = await getDisplayPreferenceApi(session.api).getDisplayPreferences({
-    displayPreferencesId: PREFS_ID,
-    client: CLIENT,
-    userId: session.userId,
-  });
-  return data;
-}
 
 const sameScope = (a: UserScope | null, b: UserScope | null) =>
   a?.serverId === b?.serverId && a?.userId === b?.userId;
@@ -28,16 +17,14 @@ class Watchlist {
   ready = $state(false);
   error = $state<unknown>(null);
   #scope: UserScope | null = null;
-  /** Schreibvorgänge nacheinander, damit sich Änderungen nicht gegenseitig überschreiben. */
-  #queue: Promise<unknown> = Promise.resolve();
 
   async load(scope: UserScope): Promise<void> {
     this.#scope = scope;
     this.ready = false;
     try {
-      const prefs = await readPrefs();
+      const prefs = await readCustomPrefs();
       if (!sameScope(scope, this.#scope)) return;
-      this.entries = parseWatchlist(prefs.CustomPrefs?.[KEY]);
+      this.entries = parseWatchlist(prefs[KEY]);
       this.error = null;
     } catch (error) {
       if (sameScope(scope, this.#scope)) this.error = error;
@@ -91,25 +78,19 @@ class Watchlist {
   ): Promise<void> {
     const scope = this.#scope;
     this.entries = local();
-    const run = this.#queue.then(async () => {
-      const prefs = await readPrefs();
-      const next = remote(parseWatchlist(prefs.CustomPrefs?.[KEY]));
-      await getDisplayPreferenceApi(session.api).updateDisplayPreferences({
-        displayPreferencesId: PREFS_ID,
-        client: CLIENT,
-        userId: session.userId,
-        displayPreferencesDto: {
-          ...prefs,
-          CustomPrefs: { ...prefs.CustomPrefs, [KEY]: JSON.stringify(next) },
-        },
-      });
-      if (sameScope(scope, this.#scope)) this.entries = next;
-    });
-    this.#queue = run.catch(() => undefined);
-    return run.catch(async (error: unknown) => {
-      if (scope) await this.load(scope);
-      throw error;
-    });
+    let next: WatchlistEntry[] = [];
+    return updateCustomPrefs((prefs) => {
+      next = remote(parseWatchlist(prefs[KEY]));
+      return { [KEY]: JSON.stringify(next) };
+    }).then(
+      () => {
+        if (sameScope(scope, this.#scope)) this.entries = next;
+      },
+      async (error: unknown) => {
+        if (scope) await this.load(scope);
+        throw error;
+      },
+    );
   }
 }
 

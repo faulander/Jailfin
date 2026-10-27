@@ -64,7 +64,10 @@
   /** Art des aktuell vom Client dargestellten Untertitels (null = keiner bzw. eingebrannt) */
   let subtitleKind = $state<ClientSubtitleKind | null>(null);
   let pgsRenderer: PgsRenderer | null = null;
-  /** Versatz in Sekunden: positiv = Untertitel später, negativ = früher (nicht bei eingebrannten). */
+  /**
+   * Versatz in Sekunden: positiv = Untertitel später, negativ = früher (nicht bei eingebrannten).
+   * Wird pro Serie bzw. Film gemerkt und beim nächsten Abspielen wieder angewendet.
+   */
   let subtitleOffset = $state(0);
   let cueHtml = $state<string[]>([]);
   let textTrack: TextTrack | null = null;
@@ -107,6 +110,7 @@
       const loaded = await loadItem(id);
       if (destroyed) return;
       item = loaded;
+      subtitleOffset = subtitleSettings.offsetFor(loaded.SeriesId ?? loaded.Id);
       const startParam = router.query.get("start");
       const startAt = startParam != null ? Number(startParam) || 0 : ticksToSeconds(loaded.UserData?.PlaybackPositionTicks);
       if (loaded.Type === "Episode" && loaded.SeriesId && loaded.Id) {
@@ -518,6 +522,8 @@
     untrack(renderCues);
     // libpgs: positiver timeOffset zeigt früher an – unser Versatz ist „positiv = später“.
     if (pgsRenderer) pgsRenderer.timeOffset = -subtitleOffset;
+    const key = untrack(() => item?.SeriesId ?? item?.Id);
+    subtitleSettings.setOffset(key, subtitleOffset);
   });
 
   function shiftSubtitles(delta: number) {

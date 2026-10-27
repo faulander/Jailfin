@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.4] – 2026-10-27
+
+### Geändert
+
+- **Untertitel-Einstellungen bleiben erhalten:** Die Darstellung (Größe, Position, Zeilenbreite, Hintergrund, Farbe, Schrift) wird zusätzlich in den Jellyfin-Benutzereinstellungen gespeichert. Sie gilt damit auch über verschiedene Adressen (LAN-IP bzw. Domain), Browser, installierte App und Geräte hinweg. Bisher war sie pro Browser/Adresse getrennt.
+- **Untertitel-Versatz wird gemerkt:** pro Serie (für alle Folgen) bzw. pro Film, und beim nächsten Abspielen automatisch angewendet. Bisher begann jede Datei bei 0.
+
 ## [0.5.3] – 2026-10-27
 
 ### Behoben
@@ -107,6 +114,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.5.4]: https://github.com/faulander/Jailfin/releases/tag/v0.5.4
 [0.5.3]: https://github.com/faulander/Jailfin/releases/tag/v0.5.3
 [0.5.2]: https://github.com/faulander/Jailfin/releases/tag/v0.5.2
 [0.5.1]: https://github.com/faulander/Jailfin/releases/tag/v0.5.1

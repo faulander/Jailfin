@@ -1,3 +1,5 @@
+import { readCustomPrefs, updateCustomPrefs } from "../jellyfin/user-prefs";
+
 /** Darstellung von Textuntertiteln; pro Gerät gespeichert (localStorage). */
 export interface SubtitleStyle {
   size: "s" | "m" | "l" | "xl" | "xxl" | "xxxl";
@@ -74,20 +76,98 @@ function load(): SubtitleStyle {
   }
 }
 
+const OFFSETS_STORAGE_KEY = "jailfin.subtitleOffsets.v1";
+const SERVER_STYLE_KEY = "subtitleStyle";
+const SERVER_OFFSETS_KEY = "subtitleOffsets";
+/** Begrenzung der gemerkten Versätze (älteste fallen heraus). */
+const MAX_OFFSETS = 300;
+
+function parseOffsets(raw: string | null | undefined): Record<string, number> {
+  try {
+    const value = JSON.parse(raw ?? "{}") as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        (entry): entry is [string, number] =>
+          typeof entry[1] === "number" && Number.isFinite(entry[1]),
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Untertitel-Darstellung und gemerkte Versätze. Lokal (sofort verfügbar) und zusätzlich in den
+ * Jellyfin-Benutzereinstellungen, damit sie auf allen Geräten und Adressen gleich sind.
+ */
 class SubtitleSettings {
   style = $state<SubtitleStyle>(load());
+  #offsets: Record<string, number> = parseOffsets(localStorage.getItem(OFFSETS_STORAGE_KEY));
+  #saveTimer: ReturnType<typeof setTimeout> | undefined;
 
   update(patch: Partial<SubtitleStyle>): void {
     this.style = sanitize({ ...this.style, ...patch });
+    this.#saveLocal();
+    this.#scheduleServerSave();
+  }
+
+  reset(): void {
+    this.update(DEFAULT_SUBTITLE_STYLE);
+  }
+
+  /**
+   * Gemerkter Versatz für eine Serie (alle Folgen) bzw. einen Film. Folgen einer Serie stammen
+   * meist aus derselben Quelle und haben denselben Versatz.
+   */
+  offsetFor(key: string | null | undefined): number {
+    return key ? (this.#offsets[key] ?? 0) : 0;
+  }
+
+  setOffset(key: string | null | undefined, seconds: number): void {
+    if (!key || this.offsetFor(key) === seconds) return;
+    delete this.#offsets[key];
+    if (seconds !== 0) this.#offsets[key] = seconds;
+    const keys = Object.keys(this.#offsets);
+    for (const old of keys.slice(0, Math.max(0, keys.length - MAX_OFFSETS)))
+      delete this.#offsets[old];
+    this.#saveLocal();
+    this.#scheduleServerSave();
+  }
+
+  /** Nach dem Login: Stand vom Server übernehmen; gibt es dort noch nichts, den lokalen hochladen. */
+  async syncFromServer(): Promise<void> {
+    try {
+      const prefs = await readCustomPrefs();
+      const serverStyle = prefs[SERVER_STYLE_KEY];
+      if (serverStyle) {
+        this.style = sanitize(JSON.parse(serverStyle) as Partial<SubtitleStyle>);
+        this.#offsets = { ...this.#offsets, ...parseOffsets(prefs[SERVER_OFFSETS_KEY]) };
+        this.#saveLocal();
+      } else {
+        this.#scheduleServerSave(0);
+      }
+    } catch {
+      // Offline o. Ä.: lokale Einstellungen gelten weiter.
+    }
+  }
+
+  #saveLocal(): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.style));
+      localStorage.setItem(OFFSETS_STORAGE_KEY, JSON.stringify(this.#offsets));
     } catch {
       // Darstellung gilt dann nur für diese Sitzung.
     }
   }
 
-  reset(): void {
-    this.update(DEFAULT_SUBTITLE_STYLE);
+  #scheduleServerSave(delay = 800): void {
+    clearTimeout(this.#saveTimer);
+    this.#saveTimer = setTimeout(() => {
+      void updateCustomPrefs(() => ({
+        [SERVER_STYLE_KEY]: JSON.stringify(this.style),
+        [SERVER_OFFSETS_KEY]: JSON.stringify(this.#offsets),
+      })).catch(() => undefined);
+    }, delay);
   }
 }
 
