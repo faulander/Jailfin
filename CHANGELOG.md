@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.6.1] – 2026-10-30
+
+### Hinzugefügt
+
+- **Hinweis auf neue Versionen:** Eine geöffnete Jailfin-Seite bzw. installierte App erkennt nach einem Deployment, dass eine neue Version bereitliegt, und bietet „Neu laden“ an. Geprüft wird beim Zurückkehren in die App und alle 15 Minuten. Bisher lief eine offene Seite bis zum manuellen Neuladen mit der alten Version weiter.
+
 ## [0.6.0] – 2026-10-30
 
 ### Hinzugefügt
@@ -136,6 +142,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.6.1]: https://github.com/faulander/Jailfin/releases/tag/v0.6.1
 [0.6.0]: https://github.com/faulander/Jailfin/releases/tag/v0.6.0
 [0.5.6]: https://github.com/faulander/Jailfin/releases/tag/v0.5.6
 [0.5.5]: https://github.com/faulander/Jailfin/releases/tag/v0.5.5

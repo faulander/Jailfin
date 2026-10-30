@@ -21,6 +21,8 @@ const de = {
     more: "Weitere Aktionen",
     close: "Schließen",
     undo: "Rückgängig",
+    updateAvailable: "Eine neue Jailfin-Version ist verfügbar.",
+    reload: "Neu laden",
     offline: "Keine Netzwerkverbindung. Inhalte werden geladen, sobald du wieder online bist.",
     loadMore: "Mehr laden",
     movie: "Film",
