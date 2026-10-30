@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.5.6] – 2026-10-30
+
+### Geändert
+
+- **Merkliste auch für begonnene Serien und Filme:** Bisher fehlte der Merken-Button bei Titeln, die schon angefangen waren (z. B. Serien unter „Als nächstes“ wie MobLand). Ein auf der Detailseite gemerkter Titel verschwand sofort wieder. Jetzt lässt sich alles vormerken. Ein Titel verlässt die Merkliste erst, wenn **nach dem Vormerken** weitergeschaut wird: eine weitere Folge gesehen oder angefangen bzw. der Film gestartet, auch in anderen Clients. Bestehende Einträge behalten die bisherige Regel.
+
 ## [0.5.5] – 2026-10-27
 
 ### Behoben
@@ -120,6 +126,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.5.6]: https://github.com/faulander/Jailfin/releases/tag/v0.5.6
 [0.5.5]: https://github.com/faulander/Jailfin/releases/tag/v0.5.5
 [0.5.4]: https://github.com/faulander/Jailfin/releases/tag/v0.5.4
 [0.5.3]: https://github.com/faulander/Jailfin/releases/tag/v0.5.3

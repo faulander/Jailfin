@@ -24,16 +24,10 @@
   const unplayed = $derived(item.Type === "Series" ? (item.UserData?.UnplayedItemCount ?? 0) : 0);
   const typeLabel = $derived(item.Type === "Movie" ? m.common.movie : m.common.series);
 
-  // Merken direkt aus der Übersicht; bereits begonnene Titel gehören nicht auf die Merkliste.
+  // Merken direkt aus der Übersicht – auch bereits begonnene Serien (z. B. aus „Als nächstes“).
   const watchTarget = $derived(watchlistTarget(item));
   const onWatchlist = $derived(watchlist.has(watchTarget?.Id));
-  const started = $derived(
-    !isEpisode &&
-      (played ||
-        (item.UserData?.PlaybackPositionTicks ?? 0) > 0 ||
-        (item.Type === "Series" && (item.UserData?.PlayedPercentage ?? 0) > 0)),
-  );
-  const canWatchlist = $derived(!!watchTarget && watchlist.ready && (onWatchlist || !started));
+  const canWatchlist = $derived(!!watchTarget && watchlist.ready);
 
   // Favorit direkt aus der Übersicht (Folgen-Poster stehen für ihre Serie).
   let favoriteOverride = $state<boolean>();

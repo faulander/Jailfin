@@ -1,7 +1,8 @@
 import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import type { UserScope } from "../jellyfin/session.svelte";
+import { loadItem } from "../jellyfin/queries";
 import { readCustomPrefs, updateCustomPrefs } from "../jellyfin/user-prefs";
-import { parseWatchlist, type WatchlistEntry } from "./watchlist";
+import { baselineOf, parseWatchlist, type WatchlistEntry } from "./watchlist";
 
 /**
  * Die Merkliste liegt in den Jellyfin-Anzeigeeinstellungen des Benutzers (siehe user-prefs.ts).
@@ -44,14 +45,15 @@ class Watchlist {
     return !!id && this.entries.some((e) => e.id === id);
   }
 
-  add(item: BaseItemDto): Promise<void> {
-    if (!item.Id || (item.Type !== "Movie" && item.Type !== "Series") || this.has(item.Id)) {
-      return Promise.resolve();
-    }
+  async add(item: BaseItemDto): Promise<void> {
+    if (!item.Id || (item.Type !== "Movie" && item.Type !== "Series") || this.has(item.Id)) return;
+    // Stand beim Vormerken festhalten (Folgen-Poster liefern die Serie ohne Benutzerdaten).
+    const source = item.UserData ? item : await loadItem(item.Id).catch(() => item);
     const entry: WatchlistEntry = {
       id: item.Id,
       type: item.Type,
       addedAt: new Date().toISOString(),
+      baseline: baselineOf(source),
     };
     return this.#update(
       () => [...this.entries, entry],

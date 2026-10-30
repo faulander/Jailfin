@@ -131,12 +131,15 @@
     return watchlist.entries.flatMap((e) => byId.get(e.id) ?? []);
   });
 
-  // Sobald eine Folge gesehen bzw. der Film gestartet ist, wandert der Titel nach „Als nächstes“
-  // bzw. „Weiterschauen“ und verlässt die Merkliste.
+  // Wird nach dem Vormerken weitergeschaut (Folge gesehen/angefangen, Film gestartet), wandert der
+  // Titel nach „Als nächstes“ bzw. „Weiterschauen“ und verlässt die Merkliste.
   $effect(() => {
     if (!nextUpRaw.data || !resume.data || !watchItems.data) return;
     const activity = activityFrom(nextUpRaw.data, resume.data);
-    const started = watchItems.data.filter((i) => isStarted(i, activity)).flatMap((i) => i.Id ?? []);
+    const entries = new Map(watchlist.entries.map((e) => [e.id, e]));
+    const started = watchItems.data
+      .filter((i) => i.Id && entries.has(i.Id) && isStarted(i, activity, entries.get(i.Id)))
+      .flatMap((i) => i.Id ?? []);
     if (started.length) untrack(() => void watchlist.remove(started).catch(() => undefined));
   });
 
