@@ -277,7 +277,9 @@ button {
   font-size: var(--text-sm);
 }
 
-.chip[aria-pressed="true"] {
+.chip[aria-pressed="true"],
+.chip[aria-current="page"],
+.chip.active {
   background: var(--color-text);
   border-color: var(--color-text);
   color: var(--color-bg);

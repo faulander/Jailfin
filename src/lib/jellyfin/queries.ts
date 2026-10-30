@@ -5,7 +5,12 @@ import type {
   ItemSortBy,
   SortOrder,
 } from "@jellyfin/sdk/lib/generated-client/models";
-import { getLibraryApi, getShowApi, getUserDataApi } from "@jellyfin/sdk/lib/utils/api";
+import {
+  getGenreApi,
+  getLibraryApi,
+  getShowApi,
+  getUserDataApi,
+} from "@jellyfin/sdk/lib/utils/api";
 import { fetchAllPages, type ItemPage } from "./paging";
 import { session } from "./session.svelte";
 import { userDataVersion } from "./userdata.svelte";
@@ -90,7 +95,12 @@ export async function loadLibraryPage(
   startIndex: number,
   limit: number,
   signal?: AbortSignal,
-  { unwatchedOnly = false, favoritesOnly = false } = {},
+  {
+    unwatchedOnly = false,
+    favoritesOnly = false,
+    genres = [],
+    years = [],
+  }: { unwatchedOnly?: boolean; favoritesOnly?: boolean; genres?: string[]; years?: number[] } = {},
 ): Promise<ItemPage> {
   const { data } = await getLibraryApi(session.api).getItems(
     {
@@ -99,6 +109,9 @@ export async function loadLibraryPage(
       // Serien gelten als gesehen, wenn alle Folgen gesehen sind.
       ...(unwatchedOnly ? { isPlayed: false } : {}),
       ...(favoritesOnly ? { isFavorite: true } : {}),
+      // Mehrere Genres: ODER-Verknüpfung (Jellyfin)
+      ...(genres.length ? { genres } : {}),
+      ...(years.length ? { years } : {}),
       recursive: true,
       startIndex,
       limit,
@@ -109,6 +122,25 @@ export async function loadLibraryPage(
     { signal },
   );
   return data;
+}
+
+/** Genres einer Bibliothek (Filme bzw. Serien), alphabetisch. */
+export async function loadGenres(
+  type: Extract<BaseItemKind, "Movie" | "Series">,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const { data } = await getGenreApi(session.api).getGenres(
+    {
+      userId: session.userId,
+      includeItemTypes: [type],
+      sortBy: ["SortName"],
+      sortOrder: ["Ascending"],
+      enableImages: false,
+      enableTotalRecordCount: false,
+    },
+    { signal },
+  );
+  return (data.Items ?? []).flatMap((g) => (g.Name ? [g.Name] : []));
 }
 
 export async function searchItems(term: string, signal?: AbortSignal): Promise<BaseItemDto[]> {
@@ -232,22 +264,4 @@ export async function setFavorite(itemId: string, favorite: boolean) {
     : await api.unmarkFavoriteItem({ itemId, userId: session.userId });
   userDataVersion.bump();
   return data;
-}
-
-export async function loadFavorites(signal?: AbortSignal): Promise<BaseItemDto[]> {
-  const { data } = await getLibraryApi(session.api).getItems(
-    {
-      ...common(),
-      isFavorite: true,
-      includeItemTypes: ["Movie", "Series"],
-      recursive: true,
-      sortBy: ["SortName"],
-      sortOrder: ["Ascending"],
-      limit: 60,
-      fields: ["PrimaryImageAspectRatio"],
-      enableTotalRecordCount: false,
-    },
-    { signal },
-  );
-  return data.Items ?? [];
 }

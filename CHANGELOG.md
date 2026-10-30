@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.9.0] – 2026-10-30
+
+### Hinzugefügt
+
+- **Favoriten** als eigener Navigationspunkt mit Umschalter „Serien“/„Filme“ (`/favorites/series`, `/favorites/movies`), mit denselben Sortierungen und Filtern wie die Bibliotheken.
+- **Genre-Filter** für Filme, Serien und Favoriten: Auswahl über „Genres“, mehrere Genres verknüpft mit ODER.
+- **Jahresfilter** (Erscheinungs- bzw. Erstausstrahlungsjahr): `<1960`, `>1985`, `=2025` bzw. `2025`, `<=1999`, `>=2000` oder ein Bereich `1980-1989`. Ungültige Eingaben werden markiert.
+- „Filter zurücksetzen“, sobald ein Filter aktiv ist. Filter bleiben pro Bibliothek gespeichert und stehen in der URL.
+
+### Geändert
+
+- Die Reihe „Favoriten“ auf der Startseite entfällt (ersetzt durch den neuen Navigationspunkt).
+
 ## [0.8.0] – 2026-10-30
 
 ### Hinzugefügt
@@ -179,6 +192,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.9.0]: https://github.com/faulander/Jailfin/releases/tag/v0.9.0
 [0.8.0]: https://github.com/faulander/Jailfin/releases/tag/v0.8.0
 [0.7.1]: https://github.com/faulander/Jailfin/releases/tag/v0.7.1
 [0.7.0]: https://github.com/faulander/Jailfin/releases/tag/v0.7.0

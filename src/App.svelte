@@ -82,6 +82,8 @@
         {#key "movies"}<Library type="Movie" />{/key}
       {:else if route.name === "series"}
         {#key "series"}<Library type="Series" />{/key}
+      {:else if route.name === "favorites"}
+        {#key `favorites-${route.kind}`}<Library type={route.kind} favorites />{/key}
       {:else if route.name === "search"}
         <Search />
       {:else if route.name === "settings"}

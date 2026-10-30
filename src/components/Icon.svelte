@@ -12,6 +12,7 @@
     more: "M12 5.5a1.5 1.5 0 1 1 0 .01M12 12a1.5 1.5 0 1 1 0 .01M12 18.5a1.5 1.5 0 1 1 0 .01",
     back: "M15 5l-7 7 7 7",
     chevronRight: "M9 5l7 7-7 7",
+    chevronDown: "M5 9l7 7 7-7",
     minus: "M5 12h14",
     plus: "M12 5v14M5 12h14",
     close: "M6 6l12 12M18 6 6 18",

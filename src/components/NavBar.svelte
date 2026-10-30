@@ -7,6 +7,7 @@
     { href: "/", label: m.nav.home, icon: "home", route: "home" },
     { href: "/movies", label: m.nav.movies, icon: "film", route: "movies" },
     { href: "/series", label: m.nav.series, icon: "tv", route: "series" },
+    { href: "/favorites", label: m.nav.favorites, icon: "heart", route: "favorites" },
     { href: "/search", label: m.nav.search, icon: "search", route: "search" },
     { href: "/stats", label: m.nav.stats, icon: "chart", route: "stats" },
     { href: "/settings", label: m.nav.settings, icon: "settings", route: "settings" },
@@ -78,6 +79,12 @@
       line-height: 1.1;
       hyphens: auto;
       overflow-wrap: anywhere;
+    }
+  }
+
+  @media (max-width: 400px) {
+    a {
+      font-size: 0.625rem;
     }
   }
 

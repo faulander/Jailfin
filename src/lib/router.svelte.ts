@@ -12,6 +12,7 @@ export type Route =
   | { name: "search" }
   | { name: "settings" }
   | { name: "stats" }
+  | { name: "favorites"; kind: "Series" | "Movie" }
   | { name: "item"; id: string }
   | { name: "play"; id: string }
   | { name: "login" }
@@ -32,10 +33,14 @@ export function matchRoute(path: string): Route {
       return { name: first };
     }
     if (first === "login") return { name: "login" };
+    if (first === "favorites") return { name: "favorites", kind: "Series" };
   }
   if (parts.length === 2 && second) {
     if (first === "item") return { name: "item", id: second };
     if (first === "play") return { name: "play", id: second };
+    if (first === "favorites" && (second === "series" || second === "movies")) {
+      return { name: "favorites", kind: second === "movies" ? "Movie" : "Series" };
+    }
   }
   return { name: "notFound" };
 }

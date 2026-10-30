@@ -6,7 +6,6 @@
     nextUp?: BaseItemDto[];
     resume?: BaseItemDto[];
     latest?: BaseItemDto[];
-    favorites?: BaseItemDto[];
     watch?: BaseItemDto[];
     key?: string;
   } = {};
@@ -22,14 +21,13 @@
   import { hideFromNextUp, hideFromResume, play } from "../lib/actions";
   import { hasResumePosition } from "../lib/format";
   import { m } from "../lib/i18n";
-  import { loadFavorites, loadItemsByIds, loadLatest, loadNextUp, loadResume } from "../lib/jellyfin/queries";
+  import { loadItemsByIds, loadLatest, loadNextUp, loadResume } from "../lib/jellyfin/queries";
   import { session } from "../lib/jellyfin/session.svelte";
   import { selectNextUp, selectResume } from "../lib/hidden/filters";
   import { hiddenResume, hiddenSeries } from "../lib/hidden/state.svelte";
   import { router } from "../lib/router.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
   import { seasonStatuses } from "../lib/tvmaze.svelte";
-  import { userDataVersion } from "../lib/jellyfin/userdata.svelte";
   import { activityFrom, isStarted } from "../lib/watchlist/watchlist";
 
   type Section<T> = { data?: T; error?: unknown; loading: boolean };
@@ -41,7 +39,6 @@
   let nextUpRaw = $state<Section<BaseItemDto[]>>({ data: cached.nextUp, loading: !cached.nextUp });
   let resume = $state<Section<BaseItemDto[]>>({ data: cached.resume, loading: !cached.resume });
   let latest = $state<Section<BaseItemDto[]>>({ data: cached.latest, loading: !cached.latest });
-  let favorites = $state<Section<BaseItemDto[]>>({ data: cached.favorites, loading: !cached.favorites });
   let watchItems = $state<Section<BaseItemDto[]>>({ data: cached.watch, loading: !cached.watch });
 
   let controller: AbortController | undefined;
@@ -70,7 +67,6 @@
       track(loadNextUp(signal), (s) => (nextUpRaw = s), () => nextUpRaw, (v) => (cache.nextUp = v)),
       track(loadResume(signal), (s) => (resume = s), () => resume, (v) => (cache.resume = v)),
       track(loadLatest(signal), (s) => (latest = s), () => latest, (v) => (cache.latest = v)),
-      loadFavoritesRow(signal),
     ];
     loadWatch();
     Promise.allSettled(all).then(async () => {
@@ -83,21 +79,6 @@
     // untrack: load() liest die Abschnittszustände, die es selbst schreibt.
     untrack(load);
     return () => controller?.abort();
-  });
-
-  // ---- Favoriten --------------------------------------------------------------
-
-  let favoritesVersion = -1;
-
-  function loadFavoritesRow(signal?: AbortSignal) {
-    favoritesVersion = userDataVersion.value;
-    return track(loadFavorites(signal), (s) => (favorites = s), () => favorites, (v) => (cache.favorites = v));
-  }
-
-  // Favorit auf einem Poster der Startseite umgeschaltet: nur die Favoriten-Reihe neu laden.
-  $effect(() => {
-    const version = userDataVersion.value;
-    if (favoritesVersion !== -1 && version !== favoritesVersion) untrack(() => void loadFavoritesRow());
   });
 
   // ---- Merkliste ------------------------------------------------------------
@@ -265,16 +246,6 @@
     />
   </div>
 
-  {#if (favorites.data?.length ?? 0) > 0 || favorites.error}
-    <Shelf title={m.home.favorites} kind="poster">
-      {#each favorites.data ?? [] as item (item.Id)}
-        <PosterCard {item} />
-      {/each}
-    </Shelf>
-    <div class="state">
-      <StateView compact error={favorites.error} onretry={load} />
-    </div>
-  {/if}
 </div>
 
 <style>
