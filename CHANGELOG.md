@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.6.2] – 2026-10-30
+
+### Geändert
+
+- **Beide Bewertungen auf Postern, ohne Einstellung:** IMDb/Community (★) unten rechts, Rotten Tomatoes (RT %) unten links, jeweils nur wenn Jellyfin einen Wert hat. Die Auswahl unter _Einstellungen → Anzeige_ entfällt.
+
 ## [0.6.1] – 2026-10-30
 
 ### Hinzugefügt
@@ -142,6 +148,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.6.2]: https://github.com/faulander/Jailfin/releases/tag/v0.6.2
 [0.6.1]: https://github.com/faulander/Jailfin/releases/tag/v0.6.1
 [0.6.0]: https://github.com/faulander/Jailfin/releases/tag/v0.6.0
 [0.5.6]: https://github.com/faulander/Jailfin/releases/tag/v0.5.6

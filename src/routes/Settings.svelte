@@ -8,10 +8,6 @@
   import { m } from "../lib/i18n";
   import { session } from "../lib/jellyfin/session.svelte";
   import { subtitleSettings } from "../lib/player/subtitle-style.svelte";
-  import { displaySettings, type PosterRating } from "../lib/display-settings.svelte";
-
-  const ratingOptions = Object.entries(m.display.posterRatings) as [PosterRating, string][];
-
   const info = $derived(session.current);
   const previewCues = ["Das ist ein Beispieluntertitel,", "<i>damit du die Darstellung prüfen kannst.</i>"];
 
@@ -96,25 +92,6 @@
       </div>
       <p class="muted small">{m.settings.localAddressHint}</p>
     </form>
-  </section>
-
-  <section class="card">
-    <h2>{m.display.title}</h2>
-    <p class="muted small">{m.display.hint}</p>
-    <div class="field-group">
-      <span class="muted small label">{m.display.posterRating}</span>
-      <div class="segmented" role="group" aria-label={m.display.posterRating}>
-        {#each ratingOptions as [value, label] (value)}
-          <button
-            type="button"
-            class="chip"
-            aria-pressed={displaySettings.value.posterRating === value}
-            onclick={() => displaySettings.update({ posterRating: value })}>{label}</button
-          >
-        {/each}
-      </div>
-      <p class="muted small">{m.display.posterRatingHint}</p>
-    </div>
   </section>
 
   <section class="card">
@@ -239,15 +216,6 @@
   .local-form .input {
     flex: 1 1 260px;
     width: auto;
-  }
-
-  .field-group {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .label {
-    font-weight: 600;
   }
 
   .version {

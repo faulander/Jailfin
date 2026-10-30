@@ -9,14 +9,12 @@
     loading = false,
     onmore,
     showType = false,
-    showRating = false,
   }: {
     items: BaseItemDto[];
     hasMore?: boolean;
     loading?: boolean;
     onmore?: () => void;
     showType?: boolean;
-    showRating?: boolean;
   } = $props();
 
   let sentinel: HTMLElement | undefined = $state();
@@ -39,7 +37,7 @@
 
 <div class="grid">
   {#each items as item (item.Id)}
-    <PosterCard {item} {showType} {showRating} />
+    <PosterCard {item} {showType} />
   {/each}
 </div>
 {#if hasMore}

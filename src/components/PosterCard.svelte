@@ -5,17 +5,12 @@
   import { posterUrl } from "../lib/jellyfin/images";
   import { describeError } from "../lib/jellyfin/errors";
   import { setFavorite } from "../lib/jellyfin/queries";
-  import { displaySettings } from "../lib/display-settings.svelte";
   import { toasts } from "../lib/toast.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
   import Icon from "./Icon.svelte";
   import Img from "./Img.svelte";
 
-  let {
-    item,
-    showType = false,
-    showRating = false,
-  }: { item: BaseItemDto; showType?: boolean; showRating?: boolean } = $props();
+  let { item, showType = false }: { item: BaseItemDto; showType?: boolean } = $props();
 
   const isEpisode = $derived(item.Type === "Episode");
   // Gruppierte neue Folgen verlinken auf die Serie.
@@ -25,19 +20,9 @@
   const unplayed = $derived(item.Type === "Series" ? (item.UserData?.UnplayedItemCount ?? 0) : 0);
   const typeLabel = $derived(item.Type === "Movie" ? m.common.movie : m.common.series);
 
-  // Bewertung unten rechts (konfigurierbar unter Einstellungen → Anzeige).
-  const ratingBadge = $derived.by(() => {
-    const mode = displaySettings.value.posterRating;
-    if (mode === "community" && item.CommunityRating) {
-      const value = item.CommunityRating.toFixed(1);
-      return { text: `★ ${value}`, label: m.display.communityLabel(value) };
-    }
-    if (mode === "critic" && item.CriticRating != null) {
-      const value = Math.round(item.CriticRating);
-      return { text: `${value} %`, label: m.display.criticLabel(value) };
-    }
-    return undefined;
-  });
+  // Bewertungen: IMDb/Community unten rechts, Rotten Tomatoes (Kritiker) unten links.
+  const community = $derived(item.CommunityRating ? item.CommunityRating.toFixed(1) : undefined);
+  const critic = $derived(item.CriticRating != null ? Math.round(item.CriticRating) : undefined);
 
   // Merken direkt aus der Übersicht – auch bereits begonnene Serien (z. B. aus „Als nächstes“).
   const watchTarget = $derived(watchlistTarget(item));
@@ -73,17 +58,17 @@
       {:else if unplayed > 0}
         <span class="badge">{unplayed}</span>
       {/if}
-      {#if ratingBadge}
-        <span class={["rating-badge", displaySettings.value.posterRating]} aria-label={ratingBadge.label}>
-          {ratingBadge.text}
-        </span>
+      {#if critic != null}
+        <span class="rating-badge critic" aria-label={m.ratings.criticLabel(critic)}>RT {critic} %</span>
+      {/if}
+      {#if community}
+        <span class="rating-badge community" aria-label={m.ratings.communityLabel(community)}>★ {community}</span>
       {/if}
     </div>
     <span class="title">{title}</span>
     <span class="sub">
       {#if showType}<span class="type">{typeLabel}</span>{/if}
       {item.ProductionYear ?? ""}
-      {#if showRating && !ratingBadge && item.CommunityRating}<span class="rating">★ {item.CommunityRating.toFixed(1)}</span>{/if}
     </span>
   </a>
   {#if watchTarget}
@@ -163,20 +148,25 @@
 
   .rating-badge {
     position: absolute;
-    right: var(--space-2);
     bottom: var(--space-2);
     padding: 3px 8px;
     border-radius: var(--radius-pill);
     background: rgb(10 12 16 / 72%);
     backdrop-filter: blur(4px);
-    color: var(--color-focus);
     font-size: var(--text-xs);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
     pointer-events: none;
   }
 
+  .rating-badge.community {
+    right: var(--space-2);
+    color: var(--color-focus);
+  }
+
   .rating-badge.critic {
+    left: var(--space-2);
     color: #ff8a65;
   }
 
@@ -246,12 +236,6 @@
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     min-height: 1.2em;
-  }
-
-  .rating {
-    margin-left: var(--space-2);
-    color: var(--color-focus);
-    font-weight: 600;
   }
 
   .type {

@@ -187,7 +187,7 @@
   </header>
 
   {#if items.length > 0}
-    <PosterGrid {items} hasMore={hasMore && !error} {loading} onmore={loadMore} showRating={sort === "rating"} />
+    <PosterGrid {items} hasMore={hasMore && !error} {loading} onmore={loadMore} />
   {/if}
   <StateView
     loading={loading && items.length === 0}
