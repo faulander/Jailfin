@@ -2,6 +2,12 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.9.1] – 2026-10-30
+
+### Behoben
+
+- Startseite: Eine Karte mit sehr langem Untertitel (z. B. eine Datei mit mehreren Folgen wie „S04E01–E08 · Windsor / Redcoats / …“) wurde so breit wie der Text und überdeckte die Nachbarkarten; die übrigen Karten der Reihe bekamen dadurch Balken über und unter dem Bild. Der Untertitel wird jetzt mit „…“ gekürzt.
+
 ## [0.9.0] – 2026-10-30
 
 ### Hinzugefügt
@@ -192,6 +198,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.9.1]: https://github.com/faulander/Jailfin/releases/tag/v0.9.1
 [0.9.0]: https://github.com/faulander/Jailfin/releases/tag/v0.9.0
 [0.8.0]: https://github.com/faulander/Jailfin/releases/tag/v0.8.0
 [0.7.1]: https://github.com/faulander/Jailfin/releases/tag/v0.7.1

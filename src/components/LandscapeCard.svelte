@@ -85,6 +85,9 @@
 <style>
   .card {
     display: grid;
+    /* Spalte auf Kartenbreite begrenzen: lange Untertitel (z. B. Mehrfachfolgen) sprengen sonst Bild und Karte */
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     gap: var(--space-2);
     min-width: 0;
     -webkit-touch-callout: none;
