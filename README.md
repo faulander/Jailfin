@@ -13,6 +13,7 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - **Bewertungen auf Postern:** IMDb/Community (★) unten rechts, Rotten Tomatoes (RT %) unten links, sofern Jellyfin einen Wert hat.
 - **Staffel-Vollständigkeit auf der Merkliste:** „S2 7/10“ bzw. „S2 ✓“ unten links auf vorgemerkten Serien, Finale-Datum unter dem Titel; unvollständige Staffeln stehen hinten. Geplante Folgen liefert TVmaze (`api.tvmaze.com`, ohne Schlüssel), vorhandene Jellyfin. Die TVmaze-ID kommt aus den Jellyfin-Provider-IDs, ersatzweise über IMDb- bzw. TheTVDB-ID.
 - **Gesehen markieren:** ganze Serie, gewählte Staffel oder einzelne Folge auf der Serienseite. Markierungen in Jailfin nehmen Serien nicht von der Merkliste.
+- **Statistik:** Wiedergabezeit, meistgesehene Serien und Filme, Verlauf; für Administratoren mit dem Plugin „Playback Reporting“ zusätzlich alle Benutzer, Uhrzeiten, Apps, Geräte, Transkodierung und laufende Wiedergaben (siehe unten).
 - Serien aus „Als nächstes“ ausblenden: über das ⋮-Menü bzw. per Long-Press auf der Karte oder auf der Serienseite. Danach kann die Aktion rückgängig gemacht werden. Verwalten lassen sich die Ausblendungen unter _Einstellungen → Ausgeblendete Serien_.
 - Titel aus „Weiterschauen“ ausblenden (⋮-Menü bzw. Long-Press). Sie kommen zurück, sobald du sie erneut ansiehst; verwalten unter _Einstellungen → Aus „Weiterschauen“ ausgeblendet_.
 - Filme und Serien als Raster mit inkrementellem Nachladen, Sortierung nach Titel, Jahr, Hinzufügedatum oder Bewertung und den Filtern „Gesehene ausblenden“ (Serien gelten als gesehen, wenn alle Folgen gesehen sind) und „Nur Favoriten“. Die gewählte Ansicht bleibt pro Bibliothek gespeichert. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
@@ -30,6 +31,14 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - Grundlage ist der Next-Up-Endpunkt von Jellyfin (`/Shows/NextUp`, inklusive angefangener Folgen). Der Client lädt **alle Seiten** und filtert erst danach. Ausblendungen verdrängen deshalb keine späteren Ergebnisse.
 - Ausblendungen werden pro **Server-ID + Benutzer-ID + Liste + ID** (SeriesId für „Als nächstes“, ItemId für „Weiterschauen“) in IndexedDB gespeichert: DB `jailfin`, Store `hidden`, versioniert über `DB_VERSION`/`migrate` in `src/lib/hidden/store.ts`. Neue Staffeln oder Server-Updates holen eine ausgeblendete Serie nicht zurück.
 - Die Ausblendung ist eine **reine Anzeigepräferenz dieses Browsers bzw. dieser PWA-Installation**. Sie wird nicht zwischen Geräten synchronisiert und beeinflusst andere Jellyfin-Clients nicht. Gesehen-Status, Favoriten und Fortschritte bleiben unverändert.
+
+## Statistik und das Plugin „Playback Reporting“
+
+Jailfin hat kein eigenes Backend, zeichnet also selbst nichts auf. Den vollständigen Wiedergabeverlauf liefert das offizielle Jellyfin-Plugin **Playback Reporting** (Dashboard → Plugins → Katalog → „Playback Reporting“ installieren, Jellyfin neu starten). Es protokolliert ab der Installation jede Wiedergabe aller Clients; Jailfin liest diese Daten über die Abfrage-Schnittstelle des Plugins (nur `SELECT`).
+
+- Die Plugin-API ist nur für **Administratoren** freigegeben. Nur sie sehen den Verlauf aller Benutzer, den Benutzerfilter, „Wann geschaut wird“, Apps, Geräte, Wiedergabeart und „Gerade läuft“.
+- Andere Benutzer (bzw. alle, solange das Plugin fehlt) sehen ihre eigene Statistik aus den Jellyfin-Benutzerdaten. Dort ist pro Titel nur die letzte Wiedergabe bekannt; die Wiedergabezeit ist Laufzeit × Anzahl der Wiedergaben, und nachträglich als gesehen markierte Titel zählen mit.
+- Zeitangaben speichert das Plugin in der lokalen Serverzeit; Jailfin rechnet sie in die Zeitzone des Browsers um.
 
 ## Bewertungen (Sortierung und Poster)
 

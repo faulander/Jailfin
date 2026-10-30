@@ -8,6 +8,7 @@
     { href: "/movies", label: m.nav.movies, icon: "film", route: "movies" },
     { href: "/series", label: m.nav.series, icon: "tv", route: "series" },
     { href: "/search", label: m.nav.search, icon: "search", route: "search" },
+    { href: "/stats", label: m.nav.stats, icon: "chart", route: "stats" },
     { href: "/settings", label: m.nav.settings, icon: "settings", route: "settings" },
   ];
 </script>
@@ -49,7 +50,8 @@
     padding: 0;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
 
   a {
@@ -61,6 +63,22 @@
     color: var(--color-text-muted);
     font-size: var(--text-xs);
     font-weight: 600;
+  }
+
+  /* Schmale Telefone: lange Beschriftungen („Einstellungen“) trennen statt überlappen */
+  @media (max-width: 480px) {
+    a {
+      padding-inline: 2px;
+      font-size: 0.6875rem;
+    }
+
+    a span {
+      max-width: 100%;
+      text-align: center;
+      line-height: 1.1;
+      hyphens: auto;
+      overflow-wrap: anywhere;
+    }
   }
 
   a.current {
@@ -97,6 +115,7 @@
     ul {
       height: auto;
       width: 100%;
+      grid-auto-flow: row;
       grid-template-columns: 1fr;
       gap: var(--space-2);
     }

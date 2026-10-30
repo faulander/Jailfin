@@ -15,6 +15,7 @@
   import Player from "./routes/Player.svelte";
   import Search from "./routes/Search.svelte";
   import Settings from "./routes/Settings.svelte";
+  import Stats from "./routes/Stats.svelte";
 
   let online = $state(navigator.onLine);
 
@@ -85,6 +86,8 @@
         <Search />
       {:else if route.name === "settings"}
         <Settings />
+      {:else if route.name === "stats"}
+        <Stats />
       {:else if route.name === "item"}
         {#key route.id}
           <Item id={route.id} />

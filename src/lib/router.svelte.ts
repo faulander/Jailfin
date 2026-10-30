@@ -11,6 +11,7 @@ export type Route =
   | { name: "series" }
   | { name: "search" }
   | { name: "settings" }
+  | { name: "stats" }
   | { name: "item"; id: string }
   | { name: "play"; id: string }
   | { name: "login" }
@@ -21,7 +22,13 @@ export function matchRoute(path: string): Route {
   if (parts.length === 0) return { name: "home" };
   const [first, second] = parts;
   if (parts.length === 1) {
-    if (first === "movies" || first === "series" || first === "search" || first === "settings") {
+    if (
+      first === "movies" ||
+      first === "series" ||
+      first === "search" ||
+      first === "settings" ||
+      first === "stats"
+    ) {
       return { name: first };
     }
     if (first === "login") return { name: "login" };

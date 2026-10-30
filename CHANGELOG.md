@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.8.0] – 2026-10-30
+
+### Hinzugefügt
+
+- **Statistik** (neuer Navigationspunkt, angelehnt an Jellystat): Zeitraum 7/30/90 Tage, 1 Jahr oder gesamt; Kennzahlen (Wiedergabezeit, Wiedergaben, Titel, aktive Tage, Bibliotheksgröße), Wiedergabezeit pro Tag/Woche/Monat getrennt nach Serien und Filmen, meistgesehene Serien und Filme mit Postern sowie ein Verlauf.
+  - Mit dem Jellyfin-Plugin **„Playback Reporting“** (für Administratoren): vollständiger Verlauf aller Benutzer mit Benutzerfilter, „Wann geschaut wird“ (Wochentag × Uhrzeit), aktivste Benutzer, Wiedergabeart (direkt, Direct Stream, transkodiert), Apps und Geräte. Gelesen wird ausschließlich per SELECT über die Abfrage-Schnittstelle des Plugins.
+  - Administratoren sehen außerdem „Gerade läuft“: laufende Wiedergaben aller Benutzer mit Fortschritt, App, Gerät und Transkodierung (alle 10 Sekunden aktualisiert).
+  - Ohne Plugin bzw. für Nicht-Administratoren: eigene Statistik aus den Jellyfin-Benutzerdaten (letzte Wiedergabe je Titel, Laufzeit × Anzahl der Wiedergaben).
+
+### Geändert
+
+- Untere Navigationsleiste auf schmalen Telefonen: sechs Einträge, lange Beschriftungen werden getrennt statt überlappt.
+
 ## [0.7.1] – 2026-10-30
 
 ### Behoben
@@ -166,6 +179,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.8.0]: https://github.com/faulander/Jailfin/releases/tag/v0.8.0
 [0.7.1]: https://github.com/faulander/Jailfin/releases/tag/v0.7.1
 [0.7.0]: https://github.com/faulander/Jailfin/releases/tag/v0.7.0
 [0.6.2]: https://github.com/faulander/Jailfin/releases/tag/v0.6.2
