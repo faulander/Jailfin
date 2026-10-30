@@ -28,6 +28,7 @@
   import { hiddenResume, hiddenSeries } from "../lib/hidden/state.svelte";
   import { router } from "../lib/router.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
+  import { seasonStatuses } from "../lib/tvmaze.svelte";
   import { userDataVersion } from "../lib/jellyfin/userdata.svelte";
   import { activityFrom, isStarted } from "../lib/watchlist/watchlist";
 
@@ -125,10 +126,19 @@
     return () => watchController?.abort();
   });
 
-  // Reihenfolge der Merkliste (zuletzt vorgemerkt zuletzt) statt Serverreihenfolge.
+  // Reihenfolge der Merkliste (zuletzt vorgemerkt zuletzt) statt Serverreihenfolge; Serien,
+  // deren aktuelle Staffel noch unvollständig ist, stehen hinten (Fertiges zuerst).
   const watchList = $derived.by(() => {
     const byId = new Map((watchItems.data ?? []).map((i) => [i.Id, i]));
-    return watchlist.entries.flatMap((e) => byId.get(e.id) ?? []);
+    const items = watchlist.entries.flatMap((e) => byId.get(e.id) ?? []);
+    const waiting = (i: BaseItemDto) => (seasonStatuses.byId[i.Id ?? ""]?.complete === false ? 1 : 0);
+    return items.toSorted((a, b) => waiting(a) - waiting(b));
+  });
+
+  // Staffel-Vollständigkeit (TVmaze) der vorgemerkten Serien.
+  $effect(() => {
+    const items = watchItems.data;
+    if (items) untrack(() => void seasonStatuses.refresh(items));
   });
 
   // Wird nach dem Vormerken weitergeschaut (Folge gesehen/angefangen, Film gestartet), wandert der
@@ -227,7 +237,7 @@
 
   <Shelf title={m.home.watchlist} kind="poster">
     {#each watchList as item (item.Id)}
-      <PosterCard {item} />
+      <PosterCard {item} season={seasonStatuses.byId[item.Id ?? ""] ?? undefined} />
     {/each}
   </Shelf>
   <div class="state">

@@ -10,7 +10,7 @@ export interface WatchlistBaseline {
 export interface WatchlistEntry {
   id: string;
   type: "Movie" | "Series";
-  /** ISO-8601 */
+  /** ISO-8601: Vormerken bzw. letzte Gesehen-Markierung in Jailfin (Bezug für „weitergeschaut“) */
   addedAt: string;
   /** Fehlt bei Einträgen aus Version 0.5.0–0.5.5 (dort durften nur unbegonnene Titel hinein). */
   baseline?: WatchlistBaseline;

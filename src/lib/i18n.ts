@@ -2,6 +2,18 @@
  * UI-Texte. Aktuell nur Deutsch; weitere Sprachen implementieren denselben
  * `Messages`-Typ und werden in `m` ausgetauscht.
  */
+/** YYYY-MM-DD → „20.11.2026“ bzw. kurz „20.11.“ */
+function formatDay(date: string, short = false): string {
+  const [y, mo, d] = date.split("-").map(Number);
+  const value = new Date(y ?? 0, (mo ?? 1) - 1, d ?? 1);
+  return value.toLocaleDateString(
+    "de-DE",
+    short ? { day: "2-digit", month: "2-digit" } : { dateStyle: "medium" },
+  );
+}
+
+const folgen = (n: number) => `${n} ${n === 1 ? "Folge" : "Folgen"}`;
+
 const de = {
   appName: "Jailfin",
   nav: {
@@ -100,6 +112,9 @@ const de = {
   detail: {
     markPlayed: "Als gesehen markieren",
     markUnplayed: "Als ungesehen markieren",
+    seasonMarkPlayed: "Staffel als gesehen markieren",
+    seasonMarkUnplayed: "Staffel als ungesehen markieren",
+    notPlayed: "Ungesehen",
     favorite: "Favorit",
     addFavorite: "Als Favorit markieren",
     removeFavorite: "Kein Favorit mehr",
@@ -118,6 +133,12 @@ const de = {
     genres: "Genres",
     specials: "Specials",
     season: (n: number) => `Staffel ${n}`,
+  },
+  seasonStatus: {
+    complete: (season: number, total: number) => `Staffel ${season} vollständig (${folgen(total)})`,
+    partial: (season: number, have: number, total: number, finale?: string) =>
+      `Staffel ${season}: ${have} von ${folgen(total)} vorhanden${finale ? `, Finale am ${formatDay(finale)}` : ""}`,
+    finale: (date: string) => `Finale ${formatDay(date, true)}`,
   },
   player: {
     play: "Abspielen",

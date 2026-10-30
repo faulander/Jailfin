@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.7.0] – 2026-10-30
+
+### Hinzugefügt
+
+- **Gesehen markieren für Staffeln und Folgen:** Auf der Serienseite gibt es jetzt „Staffel als gesehen markieren“ für die gewählte Staffel und an jeder Folge einen Gesehen-Schalter (zusätzlich zum bisherigen Schalter für die ganze Serie). Markierungen in Jailfin nehmen eine Serie nicht von der Merkliste: Ihr Stand wird neu festgehalten, damit man z. B. Staffel 1 nachtragen und auf Staffel 2 warten kann.
+- **Staffel-Vollständigkeit auf der Merkliste:** Serien zeigen unten links den Stand der aktuellen Staffel, z. B. „S2 7/10“ (7 von 10 geplanten Folgen auf dem Server, orange) oder „S2 ✓“ (vollständig, grün). Läuft die Staffel noch, steht unter dem Titel das Datum des Finales. Die geplanten Folgen kommen von TVmaze (öffentliche API ohne Schlüssel, 6 Stunden zwischengespeichert), die vorhandenen von Jellyfin.
+- Die Merkliste zeigt Fertiges zuerst: Serien mit unvollständiger aktueller Staffel stehen hinten.
+
 ## [0.6.2] – 2026-10-30
 
 ### Geändert
@@ -148,6 +156,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.7.0]: https://github.com/faulander/Jailfin/releases/tag/v0.7.0
 [0.6.2]: https://github.com/faulander/Jailfin/releases/tag/v0.6.2
 [0.6.1]: https://github.com/faulander/Jailfin/releases/tag/v0.6.1
 [0.6.0]: https://github.com/faulander/Jailfin/releases/tag/v0.6.0

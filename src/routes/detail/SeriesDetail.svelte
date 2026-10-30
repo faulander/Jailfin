@@ -5,12 +5,12 @@
   import Img from "../../components/Img.svelte";
   import ProgressBar from "../../components/ProgressBar.svelte";
   import StateView from "../../components/StateView.svelte";
-  import { hideFromNextUp, play, showInNextUp } from "../../lib/actions";
+  import { hideFromNextUp, markPlayed, play, showInNextUp } from "../../lib/actions";
   import { episodeCode, formatRuntime, hasResumePosition, progressPercent } from "../../lib/format";
   import { m } from "../../lib/i18n";
   import { describeError } from "../../lib/jellyfin/errors";
   import { landscapeUrl } from "../../lib/jellyfin/images";
-  import { loadEpisodes, loadSeasons, loadSeriesNextUp, setPlayed } from "../../lib/jellyfin/queries";
+  import { loadEpisodes, loadItem, loadSeasons, loadSeriesNextUp } from "../../lib/jellyfin/queries";
   import { hiddenSeries } from "../../lib/hidden/state.svelte";
   import { router } from "../../lib/router.svelte";
   import { toasts } from "../../lib/toast.svelte";
@@ -90,16 +90,33 @@
   // „Abspielen“: nächste Folge laut Jellyfin, sonst erste Folge der gewählten Staffel.
   const playTarget = $derived(nextUp ?? episodes.find((e) => !e.UserData?.Played) ?? episodes[0]);
 
-  async function togglePlayed() {
+  // Gesehen-Markierungen für Serie, Staffel oder Folge; danach Staffeln, Folgen und Serie neu laden.
+  let marking = $state<string>();
+
+  async function togglePlayedFor(target: BaseItemDto, next: boolean) {
+    if (!target.Id || marking) return;
+    marking = target.Id;
     try {
-      const data = await setPlayed(seriesId, !played);
-      userDataOverride = { ...userData, ...data };
-      if (selected) await loadSeasonEpisodes(selected);
-      nextUp = await loadSeriesNextUp(seriesId).catch(() => undefined);
+      await markPlayed(target, next);
+      const seasonId = selected;
+      const [s, upcoming, fresh, eps] = await Promise.all([
+        loadSeasons(seriesId),
+        loadSeriesNextUp(seriesId).catch(() => undefined),
+        loadItem(seriesId).catch(() => undefined),
+        seasonId ? loadEpisodes(seriesId, seasonId) : Promise.resolve(undefined),
+      ]);
+      seasons = s;
+      nextUp = upcoming;
+      if (fresh?.UserData) userDataOverride = fresh.UserData;
+      if (eps && selected === seasonId) episodes = eps;
     } catch (e) {
       toasts.show(describeError(e), { tone: "error" });
+    } finally {
+      marking = undefined;
     }
   }
+
+  const selectedSeason = $derived(seasons.find((s) => s.Id === selected));
 
   function seasonLabel(season: BaseItemDto) {
     if (season.IndexNumber === 0) return m.detail.specials;
@@ -130,7 +147,13 @@
         {m.detail.hideFromNextUp}
       </button>
     {/if}
-    <button class="btn btn-ghost" type="button" aria-pressed={played} onclick={togglePlayed}>
+    <button
+      class="btn btn-ghost"
+      type="button"
+      aria-pressed={played}
+      disabled={!!marking}
+      onclick={() => togglePlayedFor(series, !played)}
+    >
       <Icon name="check" size={20} />
       {played ? m.detail.markUnplayed : m.detail.markPlayed}
     </button>
@@ -162,9 +185,26 @@
       {/each}
     </div>
 
+    {#if selectedSeason && episodes.length > 0}
+      {@const seasonPlayed = !!selectedSeason.UserData?.Played}
+      <div class="season-bar">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          aria-pressed={seasonPlayed}
+          disabled={!!marking}
+          onclick={() => togglePlayedFor(selectedSeason, !seasonPlayed)}
+        >
+          <Icon name="check" size={18} />
+          {seasonPlayed ? m.detail.seasonMarkUnplayed : m.detail.seasonMarkPlayed}
+        </button>
+      </div>
+    {/if}
+
     <ol class="episodes" aria-busy={episodesLoading}>
       {#each episodes as episode (episode.Id)}
         {@const progress = progressPercent(episode)}
+        {@const epPlayed = !!episode.UserData?.Played}
         <li class="episode">
           <button class="thumb" type="button" onclick={() => play(episode)} aria-label={`${m.common.play}: ${episode.Name}`}>
             <Img src={landscapeUrl(episode, 360)} ratio="16 / 9" />
@@ -180,9 +220,18 @@
             </a>
             <p class="muted ep-meta">
               {formatRuntime(episode.RunTimeTicks) ?? ""}
-              {#if episode.UserData?.Played}
-                <span class="played"><Icon name="check" size={16} /> {m.detail.played}</span>
-              {/if}
+              <button
+                class="ep-played"
+                class:on={epPlayed}
+                type="button"
+                aria-pressed={epPlayed}
+                disabled={!!marking}
+                aria-label={`${epPlayed ? m.detail.markUnplayed : m.detail.markPlayed}: ${episode.Name ?? ""}`}
+                onclick={() => togglePlayedFor(episode, !epPlayed)}
+              >
+                <Icon name="check" size={16} />
+                {epPlayed ? m.detail.played : m.detail.notPlayed}
+              </button>
             </p>
             {#if episode.Overview}<p class="ep-overview">{episode.Overview}</p>{/if}
           </div>
@@ -328,15 +377,44 @@
 
   .ep-meta {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-3);
     font-size: var(--text-sm);
   }
 
-  .played {
+  .ep-played {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    min-height: 36px;
+    padding: 4px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .ep-played:hover:not(:disabled) {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+
+  .ep-played.on {
     color: var(--color-success);
+    border-color: color-mix(in srgb, var(--color-success) 50%, transparent);
+  }
+
+  .ep-played:disabled {
+    cursor: progress;
+  }
+
+  .season-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-block: var(--space-3);
   }
 
   .ep-overview {

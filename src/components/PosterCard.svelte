@@ -9,8 +9,20 @@
   import { watchlist } from "../lib/watchlist/state.svelte";
   import Icon from "./Icon.svelte";
   import Img from "./Img.svelte";
+  import type { SeasonStatus } from "../lib/season-status";
 
-  let { item, showType = false }: { item: BaseItemDto; showType?: boolean } = $props();
+  const today = () => new Date().toLocaleDateString("sv-SE");
+
+  let {
+    item,
+    showType = false,
+    season,
+  }: {
+    item: BaseItemDto;
+    showType?: boolean;
+    /** Vollständigkeit der aktuellen Staffel (Merkliste); ersetzt dort die Kritiker-Bewertung */
+    season?: SeasonStatus;
+  } = $props();
 
   const isEpisode = $derived(item.Type === "Episode");
   // Gruppierte neue Folgen verlinken auf die Serie.
@@ -23,6 +35,13 @@
   // Bewertungen: IMDb/Community unten rechts, Rotten Tomatoes (Kritiker) unten links.
   const community = $derived(item.CommunityRating ? item.CommunityRating.toFixed(1) : undefined);
   const critic = $derived(item.CriticRating != null ? Math.round(item.CriticRating) : undefined);
+  const finaleAhead = $derived(season && !season.complete && season.finale && season.finale > today() ? season.finale : undefined);
+  const seasonLabel = $derived(
+    season &&
+      (season.complete
+        ? m.seasonStatus.complete(season.season, season.total)
+        : m.seasonStatus.partial(season.season, season.have, season.total, finaleAhead)),
+  );
 
   // Merken direkt aus der Übersicht – auch bereits begonnene Serien (z. B. aus „Als nächstes“).
   const watchTarget = $derived(watchlistTarget(item));
@@ -58,7 +77,12 @@
       {:else if unplayed > 0}
         <span class="badge">{unplayed}</span>
       {/if}
-      {#if critic != null}
+      {#if season}
+        <span class={["rating-badge", "season", season.complete && "complete"]} aria-label={seasonLabel} title={seasonLabel}>
+          S{season.season}
+          {#if season.complete}<Icon name="check" size={14} />{:else}{season.have}/{season.total}{/if}
+        </span>
+      {:else if critic != null}
         <span class="rating-badge critic" aria-label={m.ratings.criticLabel(critic)}>RT {critic} %</span>
       {/if}
       {#if community}
@@ -68,7 +92,7 @@
     <span class="title">{title}</span>
     <span class="sub">
       {#if showType}<span class="type">{typeLabel}</span>{/if}
-      {item.ProductionYear ?? ""}
+      {[item.ProductionYear, finaleAhead && m.seasonStatus.finale(finaleAhead)].filter(Boolean).join(" · ")}
     </span>
   </a>
   {#if watchTarget}
@@ -168,6 +192,19 @@
   .rating-badge.critic {
     left: var(--space-2);
     color: #ff8a65;
+  }
+
+  .rating-badge.season {
+    left: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffb74d;
+    pointer-events: auto;
+  }
+
+  .rating-badge.season.complete {
+    color: var(--color-success);
   }
 
   /* Merken/Favorit oben links auf dem Poster (rechts sitzen die Gesehen-Badges): je 48 px Trefferfläche */

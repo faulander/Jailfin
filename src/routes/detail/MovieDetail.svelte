@@ -2,11 +2,10 @@
   import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
   import Icon from "../../components/Icon.svelte";
   import ProgressBar from "../../components/ProgressBar.svelte";
-  import { play } from "../../lib/actions";
+  import { markPlayed, play } from "../../lib/actions";
   import { episodeCode, formatRuntime, hasResumePosition, progressPercent, remainingTime } from "../../lib/format";
   import { m } from "../../lib/i18n";
   import { describeError } from "../../lib/jellyfin/errors";
-  import { setPlayed } from "../../lib/jellyfin/queries";
   import { toasts } from "../../lib/toast.svelte";
   import DetailHero from "./DetailHero.svelte";
   import ItemToggles from "./ItemToggles.svelte";
@@ -28,10 +27,9 @@
   );
 
   async function togglePlayed() {
-    if (!item.Id) return;
     busy = true;
     try {
-      const userData = await setPlayed(item.Id, !played);
+      const userData = await markPlayed(item, !played);
       onchange({ ...item, UserData: { ...item.UserData, ...userData } });
     } catch (e) {
       toasts.show(describeError(e), { tone: "error" });

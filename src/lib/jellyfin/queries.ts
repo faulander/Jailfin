@@ -139,7 +139,30 @@ export async function loadItem(id: string, signal?: AbortSignal): Promise<BaseIt
 export async function loadItemsByIds(ids: string[], signal?: AbortSignal): Promise<BaseItemDto[]> {
   if (ids.length === 0) return [];
   const { data } = await getLibraryApi(session.api).getItems(
-    { ...common(), ids, enableTotalRecordCount: false },
+    { ...common(), ids, fields: ["ProviderIds"], enableTotalRecordCount: false },
+    { signal },
+  );
+  return data.Items ?? [];
+}
+
+/** Vorhandene Folgen einer Staffel (nur Nummern, für die Vollständigkeitsanzeige der Merkliste). */
+export async function loadSeasonEpisodeItems(
+  seriesId: string,
+  season: number,
+  signal?: AbortSignal,
+): Promise<BaseItemDto[]> {
+  const { data } = await getLibraryApi(session.api).getItems(
+    {
+      userId: session.userId,
+      parentId: seriesId,
+      includeItemTypes: ["Episode"],
+      recursive: true,
+      parentIndexNumber: season,
+      isMissing: false,
+      enableImages: false,
+      enableUserData: false,
+      enableTotalRecordCount: false,
+    },
     { signal },
   );
   return data.Items ?? [];

@@ -71,6 +71,27 @@ class Watchlist {
   }
 
   /**
+   * Stand eines vorgemerkten Titels neu festhalten (nach einer Gesehen-Markierung in Jailfin).
+   * Bezugszeitpunkt ist mindestens die letzte Wiedergabe laut Server, damit Uhrzeitabweichungen
+   * zwischen Gerät und Server den Eintrag nicht entfernen.
+   */
+  rebaseline(item: BaseItemDto): Promise<void> {
+    const id = item.Id;
+    if (!id || !this.has(id)) return Promise.resolve();
+    const now = Date.now();
+    const lastPlayed = Date.parse(item.UserData?.LastPlayedDate ?? "");
+    const since = new Date(
+      Number.isFinite(lastPlayed) ? Math.max(now, lastPlayed) : now,
+    ).toISOString();
+    const apply = (list: WatchlistEntry[]) =>
+      list.map((e) => (e.id === id ? { ...e, addedAt: since, baseline: baselineOf(item) } : e));
+    return this.#update(
+      () => apply(this.entries),
+      (list) => apply(list),
+    );
+  }
+
+  /**
    * Optimistisch lokal ändern, dann auf dem Server lesen–ändern–schreiben, damit Änderungen
    * anderer Geräte erhalten bleiben. Bei Fehlern wird der Serverstand wiederhergestellt.
    */

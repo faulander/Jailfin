@@ -1,10 +1,11 @@
-import type { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import type { BaseItemDto, UserItemDataDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { hiddenResume, hiddenSeries } from "./hidden/state.svelte";
 import { m } from "./i18n";
 import { router } from "./router.svelte";
 import { toasts } from "./toast.svelte";
 import { watchlist } from "./watchlist/state.svelte";
 import { describeError } from "./jellyfin/errors";
+import { loadItem, setPlayed } from "./jellyfin/queries";
 
 /** Was auf die Merkliste kommt: Filme und Serien; eine Folge steht für ihre Serie. */
 export function watchlistTarget(item: BaseItemDto): BaseItemDto | undefined {
@@ -28,6 +29,21 @@ export async function toggleWatchlist(item: BaseItemDto): Promise<void> {
   } catch (error) {
     toasts.show(describeError(error), { tone: "error" });
   }
+}
+
+/**
+ * Gesehen-Status setzen (Film, Serie, Staffel oder Folge). Nachgetragene Markierungen sind
+ * kein „Weiterschauen“: Steht die Serie auf der Merkliste, wird ihr Stand neu festgehalten,
+ * damit sie dort bleibt (z. B. Staffel 1 als gesehen markieren und auf Staffel 2 warten).
+ */
+export async function markPlayed(item: BaseItemDto, played: boolean): Promise<UserItemDataDto> {
+  if (!item.Id) throw new Error("Eintrag ohne Id");
+  const data = await setPlayed(item.Id, played);
+  const seriesId = item.Type === "Series" ? item.Id : item.SeriesId;
+  if (seriesId && watchlist.has(seriesId)) {
+    await watchlist.rebaseline(await loadItem(seriesId)).catch(() => undefined);
+  }
+  return data;
 }
 
 /** Öffnet den Player; ohne `fromStart` wird an der gespeicherten Position fortgesetzt. */
