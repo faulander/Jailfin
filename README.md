@@ -10,6 +10,7 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - Startseite: **Als nächstes**, **Weiterschauen**, **Merkliste**, **Zuletzt hinzugefügt**, **Favoriten**. Eine angefangene Folge erscheint in den ersten beiden Reihen, jeweils mit Fortschrittsbalken. Die Reihen lassen sich wischen, mit großen Pfeil-Buttons blättern oder über eine breite Scrollleiste ziehen.
 - **Merkliste:** Filme und Serien über den Merken-Button oben links auf jedem Poster (Übersichten, Suche, Startseite) oder auf der Detailseite vormerken, auch bereits begonnene Serien. Wird nach dem Vormerken weitergeschaut (Folge gesehen bzw. angefangen, Film gestartet, auch in anderen Clients), verlässt der Titel die Merkliste automatisch und steht unter „Als nächstes“ bzw. „Weiterschauen“. Gespeichert wird in den Jellyfin-Anzeigeeinstellungen des Benutzers (DisplayPreferences, Client `jailfin`), also auf allen Geräten gleich und ohne eigenes Backend.
 - **Favoriten:** Herz-Button auf jedem Poster oder „Favorit“ auf der Detailseite (Jellyfin-Favoriten, in allen Clients sichtbar); Reihe „Favoriten“ auf der Startseite und Filter „Nur Favoriten“ in Filme/Serien.
+- **Bewertung auf Postern** unten rechts: einstellbar unter _Einstellungen → Anzeige_ (IMDb/Community, Kritiker/Rotten Tomatoes oder aus), gespeichert mit dem Jellyfin-Konto.
 - Serien aus „Als nächstes“ ausblenden: über das ⋮-Menü bzw. per Long-Press auf der Karte oder auf der Serienseite. Danach kann die Aktion rückgängig gemacht werden. Verwalten lassen sich die Ausblendungen unter _Einstellungen → Ausgeblendete Serien_.
 - Titel aus „Weiterschauen“ ausblenden (⋮-Menü bzw. Long-Press). Sie kommen zurück, sobald du sie erneut ansiehst; verwalten unter _Einstellungen → Aus „Weiterschauen“ ausgeblendet_.
 - Filme und Serien als Raster mit inkrementellem Nachladen, Sortierung nach Titel, Jahr, Hinzufügedatum oder Bewertung und den Filtern „Gesehene ausblenden“ (Serien gelten als gesehen, wenn alle Folgen gesehen sind) und „Nur Favoriten“. Die gewählte Ansicht bleibt pro Bibliothek gespeichert. Dazu kommen eine Suche mit Debouncing sowie Detailseiten mit Staffeln, Episoden und Gesehen-Status.
@@ -28,9 +29,9 @@ Stack: Svelte 5 (Runes) · TypeScript · reines CSS · Vite+ (`vp`) · Bun · Do
 - Ausblendungen werden pro **Server-ID + Benutzer-ID + Liste + ID** (SeriesId für „Als nächstes“, ItemId für „Weiterschauen“) in IndexedDB gespeichert: DB `jailfin`, Store `hidden`, versioniert über `DB_VERSION`/`migrate` in `src/lib/hidden/store.ts`. Neue Staffeln oder Server-Updates holen eine ausgeblendete Serie nicht zurück.
 - Die Ausblendung ist eine **reine Anzeigepräferenz dieses Browsers bzw. dieser PWA-Installation**. Sie wird nicht zwischen Geräten synchronisiert und beeinflusst andere Jellyfin-Clients nicht. Gesehen-Status, Favoriten und Fortschritte bleiben unverändert.
 
-## Sortierung nach Bewertung
+## Bewertungen (Sortierung und Poster)
 
-Jellyfin kennt kein eigenes IMDb-Feld. Sortiert wird nach der **Community-Bewertung** des Items. Das ist die IMDb-Wertung, wenn auf dem Server der OMDb-Metadatenanbieter aktiv ist (in der Bibliothek vor TMDb priorisieren), sonst die TMDb-Wertung.
+Jellyfin kennt kein eigenes IMDb-Feld. Sortierung und Poster-Badge nutzen die **Community-Bewertung** des Items. Das ist die IMDb-Wertung, wenn auf dem Server der OMDb-Metadatenanbieter aktiv ist (in der Bibliothek vor TMDb priorisieren), sonst die TMDb-Wertung. Die Kritiker-Bewertung (Rotten Tomatoes) liefert ebenfalls nur OMDb.
 
 ## Entwicklung
 

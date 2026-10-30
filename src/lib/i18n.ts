@@ -151,6 +151,20 @@ const de = {
       "Bild-Untertitel (PGS) werden wie auf der Disc dargestellt; Größe und Stil lassen sich dafür nicht ändern, der Versatz schon.",
     seconds: (s: string) => `${s} s`,
   },
+  display: {
+    title: "Anzeige",
+    hint: "Wird mit deinem Jellyfin-Konto gespeichert (auf allen Geräten gleich).",
+    posterRating: "Bewertung auf Postern",
+    posterRatings: {
+      off: "Aus",
+      community: "IMDb / Community",
+      critic: "Kritiker (Rotten Tomatoes)",
+    },
+    posterRatingHint:
+      "Community = Bewertung aus den Jellyfin-Metadaten: IMDb, wenn der OMDb-Anbieter aktiv ist, sonst TMDb. Kritiker gibt es nur mit OMDb.",
+    communityLabel: (value: string) => `Bewertung ${value} von 10`,
+    criticLabel: (value: number) => `Kritiker ${value} %`,
+  },
   subtitleStyle: {
     title: "Untertitel",
     hint: "Gilt für alle Textuntertitel und wird mit deinem Jellyfin-Konto gespeichert (auf allen Geräten gleich).",

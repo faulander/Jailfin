@@ -7,6 +7,7 @@
   import { interceptLinks, router } from "./lib/router.svelte";
   import { watchlist } from "./lib/watchlist/state.svelte";
   import { subtitleSettings } from "./lib/player/subtitle-style.svelte";
+  import { displaySettings } from "./lib/display-settings.svelte";
   import Home from "./routes/Home.svelte";
   import Item from "./routes/Item.svelte";
   import Library from "./routes/Library.svelte";
@@ -33,6 +34,7 @@
     if (scope && session.status === "authenticated") {
       void watchlist.load(scope);
       void subtitleSettings.syncFromServer();
+      void displaySettings.syncFromServer();
     } else if (!scope) watchlist.reset();
   });
 

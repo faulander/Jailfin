@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.6.0] – 2026-10-30
+
+### Hinzugefügt
+
+- **Bewertung auf Postern:** unten rechts auf jedem Film- und Serienposter (Übersichten, Suche, Startseite). Einstellbar unter _Einstellungen → Anzeige_: „IMDb / Community“ (Standard; die Community-Bewertung aus Jellyfin, also IMDb, wenn der OMDb-Anbieter aktiv ist, sonst TMDb), „Kritiker (Rotten Tomatoes)“ oder „Aus“. Gespeichert mit dem Jellyfin-Konto.
+
+### Behoben
+
+- Player: Die Leertaste wird jetzt in der Capture-Phase für keydown, keypress und keyup abgefangen, und ein fokussierter Steuerungs-Button verliert den Fokus. Damit kann sie in keinem Browser mehr einen Button (z. B. Vollbild) auslösen, auch nicht in Firefox.
+
 ## [0.5.6] – 2026-10-30
 
 ### Geändert
@@ -126,6 +136,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.6.0]: https://github.com/faulander/Jailfin/releases/tag/v0.6.0
 [0.5.6]: https://github.com/faulander/Jailfin/releases/tag/v0.5.6
 [0.5.5]: https://github.com/faulander/Jailfin/releases/tag/v0.5.5
 [0.5.4]: https://github.com/faulander/Jailfin/releases/tag/v0.5.4

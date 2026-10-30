@@ -342,16 +342,32 @@
     }, DOUBLE_CLICK_MS);
   }
 
+  const isTextField = (target: EventTarget | null) =>
+    !!(target as HTMLElement | null)?.closest?.("input:not([type=range]), textarea, [contenteditable]");
+
   /**
-   * Manche Browser (z. B. Firefox, Safari) lösen einen fokussierten Button erst beim Loslassen
-   * der Leertaste aus – unabhängig von keydown. Darum auch keyup abfangen, sonst schaltet Space
-   * nach einem Klick auf „Vollbild“ das Vollbild um statt zu pausieren.
+   * Leertaste gehört im Player der Wiedergabe. Browser lösen einen fokussierten Button sonst
+   * je nach Engine bei keydown, keypress oder keyup aus (Firefox: Vollbild-Button schaltet um).
+   * Daher in der Capture-Phase für alle drei Ereignisse abfangen und den Fokus vom Button nehmen.
    */
-  function onKeyup(event: KeyboardEvent) {
-    if (audioMenu || subtitleMenu || event.key !== " ") return;
-    if ((event.target as HTMLElement | null)?.closest?.("input:not([type=range]), textarea")) return;
-    event.preventDefault();
-  }
+  $effect(() => {
+    const guard = (event: KeyboardEvent) => {
+      if (event.key !== " " || audioMenu || subtitleMenu || isTextField(event.target)) return;
+      const focused = document.activeElement as HTMLElement | null;
+      if (focused && focused !== document.body && !focused.closest("dialog")) focused.blur();
+      event.preventDefault();
+      if (event.type !== "keydown") event.stopPropagation();
+    };
+    const options = { capture: true } as const;
+    addEventListener("keydown", guard, options);
+    addEventListener("keypress", guard, options);
+    addEventListener("keyup", guard, options);
+    return () => {
+      removeEventListener("keydown", guard, options);
+      removeEventListener("keypress", guard, options);
+      removeEventListener("keyup", guard, options);
+    };
+  });
 
   /** Nach Maus-/Touch-Klick keinen Fokus auf Steuerungs-Buttons lassen (Tastatur-Fokus bleibt). */
   function dropPointerFocus(event: MouseEvent) {
@@ -597,7 +613,7 @@
   });
 </script>
 
-<svelte:window onkeydown={onKeydown} onkeyup={onKeyup} onpagehide={() => reporter?.stop()} />
+<svelte:window onkeydown={onKeydown} onpagehide={() => reporter?.stop()} />
 <svelte:document onfullscreenchange={onFullscreenChange} />
 
 <div

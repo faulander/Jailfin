@@ -5,6 +5,7 @@
   import { posterUrl } from "../lib/jellyfin/images";
   import { describeError } from "../lib/jellyfin/errors";
   import { setFavorite } from "../lib/jellyfin/queries";
+  import { displaySettings } from "../lib/display-settings.svelte";
   import { toasts } from "../lib/toast.svelte";
   import { watchlist } from "../lib/watchlist/state.svelte";
   import Icon from "./Icon.svelte";
@@ -23,6 +24,20 @@
   const played = $derived(!!item.UserData?.Played);
   const unplayed = $derived(item.Type === "Series" ? (item.UserData?.UnplayedItemCount ?? 0) : 0);
   const typeLabel = $derived(item.Type === "Movie" ? m.common.movie : m.common.series);
+
+  // Bewertung unten rechts (konfigurierbar unter Einstellungen → Anzeige).
+  const ratingBadge = $derived.by(() => {
+    const mode = displaySettings.value.posterRating;
+    if (mode === "community" && item.CommunityRating) {
+      const value = item.CommunityRating.toFixed(1);
+      return { text: `★ ${value}`, label: m.display.communityLabel(value) };
+    }
+    if (mode === "critic" && item.CriticRating != null) {
+      const value = Math.round(item.CriticRating);
+      return { text: `${value} %`, label: m.display.criticLabel(value) };
+    }
+    return undefined;
+  });
 
   // Merken direkt aus der Übersicht – auch bereits begonnene Serien (z. B. aus „Als nächstes“).
   const watchTarget = $derived(watchlistTarget(item));
@@ -58,12 +73,17 @@
       {:else if unplayed > 0}
         <span class="badge">{unplayed}</span>
       {/if}
+      {#if ratingBadge}
+        <span class={["rating-badge", displaySettings.value.posterRating]} aria-label={ratingBadge.label}>
+          {ratingBadge.text}
+        </span>
+      {/if}
     </div>
     <span class="title">{title}</span>
     <span class="sub">
       {#if showType}<span class="type">{typeLabel}</span>{/if}
       {item.ProductionYear ?? ""}
-      {#if showRating && item.CommunityRating}<span class="rating">★ {item.CommunityRating.toFixed(1)}</span>{/if}
+      {#if showRating && !ratingBadge && item.CommunityRating}<span class="rating">★ {item.CommunityRating.toFixed(1)}</span>{/if}
     </span>
   </a>
   {#if watchTarget}
@@ -139,6 +159,25 @@
   .badge.played {
     padding: 0;
     background: var(--color-success);
+  }
+
+  .rating-badge {
+    position: absolute;
+    right: var(--space-2);
+    bottom: var(--space-2);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    background: rgb(10 12 16 / 72%);
+    backdrop-filter: blur(4px);
+    color: var(--color-focus);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .rating-badge.critic {
+    color: #ff8a65;
   }
 
   /* Merken/Favorit oben links auf dem Poster (rechts sitzen die Gesehen-Badges): je 48 px Trefferfläche */
