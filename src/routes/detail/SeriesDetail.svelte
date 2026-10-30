@@ -118,9 +118,10 @@
 
   const selectedSeason = $derived(seasons.find((s) => s.Id === selected));
 
+  // Einheitlich „Staffel N“ – Jellyfin liefert je nach Metadatenquelle „Season 1“ oder „Staffel 2“.
   function seasonLabel(season: BaseItemDto) {
     if (season.IndexNumber === 0) return m.detail.specials;
-    return season.Name ?? m.detail.season(season.IndexNumber ?? 0);
+    return season.IndexNumber != null ? m.detail.season(season.IndexNumber) : (season.Name ?? "");
   }
 </script>
 
@@ -180,6 +181,7 @@
           onclick={() => (selected = season.Id ?? undefined)}
         >
           {seasonLabel(season)}
+          {#if season.ChildCount}<span class="count">· {season.ChildCount}</span>{/if}
           {#if season.UserData?.Played}<Icon name="check" size={16} />{/if}
         </button>
       {/each}
@@ -278,7 +280,10 @@
     font-size: var(--text-sm);
   }
 
+  /* Über dem Hero-Hintergrund zeichnen: Dessen Bild ragt bei breiten, niedrigen Heros
+     (kurze Beschreibung, großes Fenster) nach unten und überdeckte sonst die Staffel-Tabs. */
   .seasons {
+    position: relative;
     padding-top: 0;
   }
 
@@ -299,16 +304,27 @@
     gap: var(--space-2);
     min-height: 44px;
     padding: 0 var(--space-4);
-    border: 0;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-pill);
     background: transparent;
-    color: var(--color-text-muted);
+    color: var(--color-text);
     font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tab:hover:not([aria-selected="true"]) {
+    background: var(--color-surface-2);
   }
 
   .tab[aria-selected="true"] {
-    background: var(--color-surface-3);
-    color: var(--color-text);
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .tab .count {
+    font-weight: 400;
+    opacity: 0.75;
   }
 
   .episodes {

@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an diesem Projekt. Versionierung nach [Semantic Versioning](https://semver.org/lang/de/), Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## [0.7.1] – 2026-10-30
+
+### Behoben
+
+- Serienseite: Die Staffel-Auswahl war in großen Fenstern unsichtbar, wenn die Beschreibung kurz ist. Das Hintergrundbild des Kopfbereichs ragte dann über die Tabs und verdeckte sie, sodass nur die vorausgewählte Staffel sichtbar war.
+
+### Geändert
+
+- Staffel-Tabs sind als Schaltflächen erkennbar (umrandet, gewählte farbig), heißen einheitlich „Staffel N“ (statt gemischt „Season 1“/„Staffel 2“ aus den Metadaten) und zeigen die Zahl der vorhandenen Folgen.
+
 ## [0.7.0] – 2026-10-30
 
 ### Hinzugefügt
@@ -156,6 +166,7 @@ Erste nutzbare Version (MVP gemäß PRD).
 - Installierbare PWA.
 - Docker-Image (nginx, ohne Root-Rechte) und `compose.yaml`.
 
+[0.7.1]: https://github.com/faulander/Jailfin/releases/tag/v0.7.1
 [0.7.0]: https://github.com/faulander/Jailfin/releases/tag/v0.7.0
 [0.6.2]: https://github.com/faulander/Jailfin/releases/tag/v0.6.2
 [0.6.1]: https://github.com/faulander/Jailfin/releases/tag/v0.6.1

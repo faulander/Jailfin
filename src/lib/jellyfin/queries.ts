@@ -170,7 +170,7 @@ export async function loadSeasonEpisodeItems(
 
 export async function loadSeasons(seriesId: string, signal?: AbortSignal): Promise<BaseItemDto[]> {
   const { data } = await getShowApi(session.api).getSeasons(
-    { ...common(), seriesId, fields: ["PrimaryImageAspectRatio"] },
+    { ...common(), seriesId, fields: ["PrimaryImageAspectRatio", "ChildCount"] },
     { signal },
   );
   return data.Items ?? [];
